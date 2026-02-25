@@ -30,8 +30,26 @@ const userSchema = new mongoose.Schema(
     },
     otpHash: String,
     otpExpireAt: Date,
+    friends: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    friendRequests: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    sentFriendRequests: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 const User = mongoose.model("User", userSchema);
