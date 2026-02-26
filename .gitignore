@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+stitch-skills
+*.agents
+skills-lock.json
+DESIGN.md
+source.html
 
 # Editor directories and files
 .vscode/*
@@ -24,3 +29,4 @@ dist-ssr
 *.sw?
 
 .env
+

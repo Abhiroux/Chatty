@@ -1,142 +1,121 @@
-import { THEMES } from "../constants";
 import { useThemeStore } from "../store/useThemeStore";
-import { Send } from "lucide-react";
+import { Send, User, Monitor, Sun, Moon } from "lucide-react";
 
 // Mock messages for the chat preview
 const PREVIEW_MESSAGES = [
   { id: 1, content: "Hey! How's it going?", isSent: false },
   {
     id: 2,
-    content: "I'm doing great! Just working on some new features.",
+    content: "I'm doing great! Just updating the new UI.",
     isSent: true,
   },
 ];
 
+const THEME_OPTIONS = [
+  { id: "light", label: "Light", icon: Sun },
+  { id: "dark", label: "Dark", icon: Moon },
+  { id: "system", label: "System", icon: Monitor },
+];
+
 const SettingsPage = () => {
   // Get theme state and setter from store
-  const { theme, setTheme } = useThemeStore();
+  const { theme, setTheme, activeTheme } = useThemeStore();
 
   return (
-    <div className="h-screen container mx-auto px-4 pt-20 max-w-5xl">
-      <div className="space-y-6">
-        {/* Theme Section Header */}
-        <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold">Theme</h2>
-          <p className="text-sm text-base-content/70">
-            Choose a theme for your chat interface
+    <div className="min-h-screen bg-slate-50 dark:bg-[#111022] container mx-auto px-4 sm:px-6 pt-24 pb-10 max-w-5xl">
+      <div className="space-y-8">
+
+        <div className="flex flex-col gap-2">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Theme Settings</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Choose a theme for your chat application.
           </p>
         </div>
 
-        {/* Theme Selection Grid */}
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-          {THEMES.map((t) => (
-            <button
-              key={t}
-              className={`
-                group flex flex-col items-center gap-1.5 p-2 rounded-lg transition-colors
-                ${theme === t ? "bg-base-200" : "hover:bg-base-200/50"}
-              `}
-              onClick={() => setTheme(t)}
-            >
-              {/* Theme Color Preview */}
-              <div
-                className="relative h-8 w-full rounded-md overflow-hidden"
-                data-theme={t}
+        {/* Theme Selector */}
+        <div className="bg-white dark:bg-[#16152a] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-4">Appearance</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {THEME_OPTIONS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                className={`
+                   flex flex-col items-center gap-3 p-4 rounded-xl transition-all border-2
+                   ${theme === id
+                    ? "border-[#6764f2] bg-[#6764f2]/5 text-[#6764f2]"
+                    : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-600 dark:text-slate-400"}
+                 `}
+                onClick={() => setTheme(id)}
               >
-                <div className="absolute inset-0 grid grid-cols-4 gap-px p-1">
-                  <div className="rounded bg-primary"></div>
-                  <div className="rounded bg-secondary"></div>
-                  <div className="rounded bg-accent"></div>
-                  <div className="rounded bg-neutral"></div>
-                </div>
-              </div>
-              {/* Theme Name Label */}
-              <span className="text-[11px] font-medium truncate w-full text-center">
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </span>
-            </button>
-          ))}
+                <Icon className="size-6" />
+                <span className="font-medium">{label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Preview Section Header */}
-        <h3 className="text-lg font-semibold mb-3">Preview</h3>
+        {/* Preview Section */}
+        <div className="bg-white dark:bg-[#16152a] rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-6">Live Preview</h3>
 
-        {/* Chat Preview Container */}
-        <div className="rounded-xl border border-base-300 overflow-hidden bg-base-100 shadow-lg">
-          <div className="p-4 bg-base-200">
-            <div className="max-w-lg mx-auto">
-              {/* Mock Chat UI */}
-              <div className="bg-base-100 rounded-xl shadow-sm overflow-hidden">
-                {/* Chat Header with User Info */}
-                <div className="px-4 py-3 border-b border-base-300 bg-base-100">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-content font-medium">
-                      J
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-sm">John Doe</h3>
-                      <p className="text-xs text-base-content/70">Online</p>
-                    </div>
+          {/* Chat Preview Container */}
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl max-w-lg mx-auto bg-slate-50 dark:bg-[#111022]">
+
+            {/* Chat Header with User Info */}
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-[#16152a]/70 backdrop-blur-md">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-10 h-10 rounded-full bg-[#6764f2] flex items-center justify-center text-white ring-2 ring-slate-100 dark:ring-[#16152a]">
+                    <User className="size-5" />
                   </div>
+                  <div className="absolute bottom-0 right-0 size-2.5 bg-green-500 border-2 border-white dark:border-[#16152a] rounded-full"></div>
                 </div>
-
-                {/* Chat Messages Display */}
-                <div className="p-4 space-y-4 min-h-[200px] max-h-[200px] overflow-y-auto bg-base-100">
-                  {PREVIEW_MESSAGES.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${
-                        message.isSent ? "justify-end" : "justify-start"
-                      }`}
-                    >
-                      {/* Message Bubble */}
-                      <div
-                        className={`
-                          max-w-[80%] rounded-xl p-3 shadow-sm
-                          ${
-                            message.isSent
-                              ? "bg-primary text-primary-content"
-                              : "bg-base-200"
-                          }
-                        `}
-                      >
-                        <p className="text-sm">{message.content}</p>
-                        {/* Message Timestamp */}
-                        <p
-                          className={`
-                            text-[10px] mt-1.5
-                            ${
-                              message.isSent
-                                ? "text-primary-content/70"
-                                : "text-base-content/70"
-                            }
-                          `}
-                        >
-                          12:00 PM
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Chat Input Area */}
-                <div className="p-4 border-t border-base-300 bg-base-100">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      className="input input-bordered flex-1 text-sm h-10"
-                      placeholder="Type a message..."
-                      value="This is a preview"
-                      readOnly
-                    />
-                    {/* Send Button */}
-                    <button className="btn btn-primary h-10 min-h-0">
-                      <Send size={18} />
-                    </button>
-                  </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100 leading-tight">John Doe</h3>
+                  <p className="text-xs text-[#6764f2] font-medium flex items-center gap-1 mt-0.5">
+                    <span className="inline-block size-1.5 rounded-full bg-[#6764f2]"></span>
+                    Active now
+                  </p>
                 </div>
               </div>
             </div>
+
+            {/* Chat Messages Display */}
+            <div className="p-6 space-y-6 min-h-[240px] bg-transparent">
+              {PREVIEW_MESSAGES.map((message) => (
+                <div key={message.id} className={`flex ${message.isSent ? "justify-end" : "justify-start"}`}>
+                  {/* Message Bubble */}
+                  <div className={`
+                          max-w-[80%] rounded-2xl p-4 shadow-sm
+                          ${message.isSent
+                      ? "bg-[#6764f2] text-white rounded-br-none shadow-[#6764f2]/20"
+                      : "bg-white dark:bg-[#1e1d33] text-slate-800 dark:text-slate-200 rounded-bl-none border border-slate-100 dark:border-slate-800"}
+                       `}>
+                    <p className="text-sm sm:text-base">{message.content}</p>
+                    {/* Message Timestamp */}
+                    <p className={`text-[11px] mt-2 ${message.isSent ? "text-white/70" : "text-slate-400"}`}>12:00 PM</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Chat Input Area */}
+            <div className="p-4 bg-transparent border-t border-slate-200 dark:border-slate-800">
+              <div className="bg-white dark:bg-[#16152a] border border-slate-200 dark:border-slate-800 rounded-2xl p-2 flex items-center gap-2">
+                <input
+                  type="text"
+                  className="w-full bg-transparent border-none px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-0 outline-none"
+                  placeholder="Type a message..."
+                  value="This is a preview"
+                  readOnly
+                />
+                {/* Send Button */}
+                <button className="p-3 bg-[#6764f2] text-white rounded-xl shadow-md shadow-[#6764f2]/30 shrink-0 flex items-center justify-center">
+                  <Send className="size-4 ml-0.5" />
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

@@ -139,9 +139,34 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Profile Updated Successfully");
     } catch (error) {
       console.log("error in update profile: ", error);
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Error updating profile");
     } finally {
       set({ isUpdatingProfile: false });
+    }
+  },
+
+  // Request update for email or phone
+  requestContactUpdate: async (data) => {
+    try {
+      const res = await axiosInstance.post("/auth/request-contact-update", data);
+      toast.success(res.data.message || "OTP sent to new contact");
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to request contact update");
+      return false;
+    }
+  },
+
+  // Verify contact update OTP
+  verifyContactUpdate: async (data) => {
+    try {
+      const res = await axiosInstance.post("/auth/verify-contact-update", data);
+      set({ authUser: res.data.updatedUser });
+      toast.success("Contact updated successfully");
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Invalid or expired OTP");
+      return false;
     }
   },
 

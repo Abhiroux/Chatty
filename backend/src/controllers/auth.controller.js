@@ -213,26 +213,110 @@ export const resendOTP = async (req, res) => {
   }
 };
 
-// Update user profile picture
+// Update user profile picture, full name, or bio
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic } = req.body;
+    const { profilePic, fullName, bio } = req.body;
     const userId = req.user._id;
 
-    if (!profilePic) {
-      return res.status(400).json({ message: "Profile pic is required" });
+    if (!profilePic && !fullName && bio === undefined) {
+      return res.status(400).json({ message: "No data to update" });
     }
 
-    // Upload image to cloudinary and update user record
-    const uploadResponse = await cloudinary.uploader.upload(profilePic);
+    const updateData = {};
+    if (fullName) updateData.fullName = fullName;
+    if (bio !== undefined) updateData.bio = bio;
+
+    if (profilePic && profilePic.startsWith("data:image")) {
+      const uploadResponse = await cloudinary.uploader.upload(profilePic);
+      updateData.profilePic = uploadResponse.secure_url;
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { profilePic: uploadResponse.secure_url },
+      updateData,
       { new: true },
     );
     res.status(200).json(updatedUser);
   } catch (error) {
     console.log("error in update profile:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const requestContactUpdate = async (req, res) => {
+  try {
+    const { newEmail, newPhone } = req.body;
+    const userId = req.user._id;
+
+    if (!newEmail && !newPhone) {
+      return res.status(400).json({ message: "New email or phone is required" });
+    }
+
+    // Check if new email/phone already exists
+    const query = [];
+    if (newEmail) query.push({ email: newEmail });
+    if (newPhone) query.push({ phone: newPhone });
+    
+    const existingUser = await User.findOne({ $or: query });
+    if (existingUser && existingUser._id.toString() !== userId.toString()) {
+      return res.status(400).json({ message: "Email or phone already in use" });
+    }
+
+    const user = await User.findById(userId);
+    const otp = generateOTP();
+    user.otpHash = hashOTP(otp);
+    user.otpExpireAt = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    if (newPhone) sendOTPSMS(newPhone, otp);
+    if (newEmail) sendOTPEmail(newEmail, otp);
+
+    res.status(200).json({ message: "OTP sent to new contact" });
+  } catch (error) {
+    console.log("Error in requestContactUpdate", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const verifyContactUpdate = async (req, res) => {
+  try {
+    const { newEmail, newPhone, otp } = req.body;
+    const userId = req.user._id;
+
+    if (!otp || (!newEmail && !newPhone)) {
+      return res.status(400).json({ message: "OTP and new contact details are required" });
+    }
+
+    const user = await User.findById(userId);
+
+    const isOTPValid =
+      user.otpHash === hashOTP(otp) && user.otpExpireAt > Date.now();
+
+    if (!isOTPValid) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    if (newEmail) user.email = newEmail;
+    if (newPhone) user.phone = newPhone;
+
+    user.otpHash = undefined;
+    user.otpExpireAt = undefined;
+    await user.save();
+
+    res.status(200).json({
+      message: "Contact updated successfully",
+      updatedUser: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        profilePic: user.profilePic,
+        bio: user.bio,
+      },
+    });
+  } catch (error) {
+    console.log("Error in verifyContactUpdate", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };

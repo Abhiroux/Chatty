@@ -150,3 +150,13 @@ export const getSentRequests = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+export const getFriends = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate("friends", "-password");
+    res.status(200).json(user.friends || []);
+  } catch (error) {
+    console.error("Error in getFriends", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};

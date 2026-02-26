@@ -8,6 +8,7 @@ import SettingsPage from "./pages/SettingsPage";
 import SignUpPage from "./pages/SignUpPage";
 import { useAuthStore } from "./store/useAuthStore";
 import VerifyOTPPage from "./pages/VerifyOTPPage";
+import ConnectionsPage from "./pages/ConnectionsPage";
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import { useThemeStore } from "./store/useThemeStore";
@@ -17,24 +18,28 @@ const App = () => {
   const { authUser, needsOTP, checkAuth, isCheckingAuth } = useAuthStore();
 
   // Get theme preference from theme store
-  const { theme } = useThemeStore();
+  const { activeTheme, initThemeListener } = useThemeStore();
 
   // Check authentication status on component mount
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
+  useEffect(() => {
+    return initThemeListener();
+  }, [initThemeListener]);
+
   // Show loading spinner while checking authentication
   if (isCheckingAuth) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader className="size-10 animate-spin" />
+      <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-[#111022]">
+        <Loader className="size-10 animate-spin text-[#6764f2]" />
       </div>
     );
   }
 
   return (
-    <div data-theme={theme}>
+    <div data-theme={activeTheme}>
       {/* Conditionally render navbar (hidden during OTP verification) */}
       {!needsOTP && <Navbar />}
 
@@ -97,6 +102,34 @@ const App = () => {
           element={
             authUser ? (
               <ProfilePage />
+            ) : needsOTP ? (
+              <Navigate to="/verify-otp" />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+
+        {/* Profile route - requires authentication */}
+        <Route
+          path="/profile"
+          element={
+            authUser ? (
+              <ProfilePage />
+            ) : needsOTP ? (
+              <Navigate to="/verify-otp" />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+
+        {/* Connections route - requires authentication */}
+        <Route
+          path="/connections"
+          element={
+            authUser ? (
+              <ConnectionsPage />
             ) : needsOTP ? (
               <Navigate to="/verify-otp" />
             ) : (
