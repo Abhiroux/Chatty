@@ -1,11 +1,16 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { Camera, Mail, User, Phone, Info, Edit2, Check, X } from "lucide-react";
+
+import ImageCropperModal from "../components/ImageCropperModal";
 
 const ProfilePage = () => {
   const { authUser, isUpdatingProfile, updateProfile, requestContactUpdate, verifyContactUpdate } = useAuthStore();
 
   const [selectedImage, setSelectedImage] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [tempImageForCrop, setTempImageForCrop] = useState(null);
 
   // Edit states for user details
   const [editMode, setEditMode] = useState({ fullName: false, bio: false, email: false, phone: false });
@@ -25,11 +30,19 @@ const ProfilePage = () => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
 
-    reader.onload = async () => {
-      const base64Image = reader.result;
-      setSelectedImage(base64Image);
-      await updateProfile({ profilePic: base64Image });
+    reader.onload = () => {
+      setTempImageForCrop(reader.result);
+      setShowCropper(true);
     };
+
+    // Reset input to allow selecting the same file again
+    e.target.value = null;
+  };
+
+  const handleCropComplete = async (file, base64Image) => {
+    setShowCropper(false);
+    setSelectedImage(base64Image);
+    await updateProfile({ profilePic: base64Image });
   };
 
   const handleSaveProfileInfo = async (field) => {
@@ -215,6 +228,17 @@ const ProfilePage = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Cropper Modal */}
+      {showCropper && tempImageForCrop && createPortal(
+        <ImageCropperModal
+          imageSrc={tempImageForCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setShowCropper(false)}
+          aspectRatio={1}
+        />,
+        document.body
       )}
     </div>
   );

@@ -16,7 +16,7 @@ const processDecryption = async (message, privateKey, myId) => {
   if (!message.iv || !message.text) return message;
 
   try {
-    const encryptedKeyBase64 = message.senderId === myId ? message.senderKey : message.receiverKey;
+    const encryptedKeyBase64 = message.senderId.toString() === myId.toString() ? message.senderKey : message.receiverKey;
     
     if (!encryptedKeyBase64 || !privateKey) {
         return { ...message, text: "[Cannot decrypt message: Missing Keys]" };
