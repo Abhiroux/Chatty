@@ -1,14 +1,18 @@
 import { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useChatStore } from "../store/useChatStore";
 import { useThemeStore } from "../store/useThemeStore";
 import { PlusCircle, Send, X, Smile, Mic } from "lucide-react";
 import toast from "react-hot-toast";
 import EmojiPicker from "emoji-picker-react";
+import ImageCropperModal from "./ImageCropperModal";
 
 const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [tempImageForCrop, setTempImageForCrop] = useState(null);
   const fileInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const { sendMessage } = useChatStore();
@@ -27,16 +31,23 @@ const MessageInput = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (!file.type.startsWith("image/")) {
+    if (!file || !file.type.startsWith("image/")) {
       toast.error("Please select a valid image file");
       return;
     }
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setImagePreview(reader.result);
+      setTempImageForCrop(reader.result);
+      setShowCropper(true);
     };
     reader.readAsDataURL(file);
+    e.target.value = null; // Reset input to allow selecting same file again
+  };
+
+  const handleCropComplete = (file, base64Image) => {
+    setShowCropper(false);
+    setImagePreview(base64Image);
   };
 
   const removeImage = () => {
@@ -159,6 +170,17 @@ const MessageInput = () => {
       <div className="text-center mt-2 hidden lg:block">
         <p className="text-[11px] text-slate-400 dark:text-slate-500">Press Enter to send, Shift + Enter for new line</p>
       </div>
+
+      {/* Cropper Modal - rendered via portal to escape overflow-hidden */}
+      {showCropper && tempImageForCrop && createPortal(
+        <ImageCropperModal
+          imageSrc={tempImageForCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setShowCropper(false)}
+          aspectRatio="free"
+        />,
+        document.body
+      )}
     </footer>
   );
 };

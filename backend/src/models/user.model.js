@@ -36,6 +36,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    encryptedPrivateKey: {
+      type: String,
+      default: "",
+    },
+    keySalt: {
+      type: String,
+      default: "",
+    },
     otpHash: String,
     oldEmailOtpHash: String,
     otpExpireAt: Date,
