@@ -9,6 +9,7 @@ import {
   resendOTP,
   requestContactUpdate,
   verifyContactUpdate,
+  changePassword,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middlewares/protectRoute.js";
 
@@ -21,6 +22,7 @@ router.post("/login", login);
 router.post("/logout", logout);
 
 router.put("/update-profile", protectRoute, updateProfile);
+router.post("/change-password", protectRoute, changePassword);
 router.post("/request-contact-update", protectRoute, requestContactUpdate);
 router.post("/verify-contact-update", protectRoute, verifyContactUpdate);
 router.get("/check", protectRoute, checkAuth);

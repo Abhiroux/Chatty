@@ -110,6 +110,10 @@ export const login = async (req, res) => {
       email: user.email,
       phone: user.phone,
       profilePic: user.profilePic,
+      bio: user.bio,
+      publicKey: user.publicKey,
+      encryptedPrivateKey: user.encryptedPrivateKey,
+      keySalt: user.keySalt,
     });
   } catch (error) {
     console.log("Error in login controller:", error.message);
@@ -172,6 +176,9 @@ export const verifyOTP = async (req, res) => {
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,
+      publicKey: user.publicKey,
+      encryptedPrivateKey: user.encryptedPrivateKey,
+      keySalt: user.keySalt,
     });
   } catch (error) {
     console.error("OTP verfication error:", error.message);
@@ -216,10 +223,10 @@ export const resendOTP = async (req, res) => {
 // Update user profile picture, full name, or bio
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic, fullName, bio, publicKey } = req.body;
+    const { profilePic, fullName, bio, publicKey, encryptedPrivateKey, keySalt } = req.body;
     const userId = req.user._id;
 
-    if (!profilePic && !fullName && bio === undefined && !publicKey) {
+    if (!profilePic && !fullName && bio === undefined && !publicKey && !encryptedPrivateKey) {
       return res.status(400).json({ message: "No data to update" });
     }
 
@@ -227,6 +234,8 @@ export const updateProfile = async (req, res) => {
     if (fullName) updateData.fullName = fullName;
     if (bio !== undefined) updateData.bio = bio;
     if (publicKey) updateData.publicKey = publicKey;
+    if (encryptedPrivateKey) updateData.encryptedPrivateKey = encryptedPrivateKey;
+    if (keySalt) updateData.keySalt = keySalt;
 
     if (profilePic && profilePic.startsWith("data:image")) {
       const uploadResponse = await cloudinary.uploader.upload(profilePic);
@@ -346,5 +355,43 @@ export const checkAuth = (req, res) => {
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// Change password and re-wrap encrypted private key
+export const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword, encryptedPrivateKey, keySalt } = req.body;
+    const userId = req.user._id;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Old and new passwords are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters" });
+    }
+
+    const user = await User.findById(userId);
+    const isPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    // Update re-wrapped encrypted private key if provided
+    if (encryptedPrivateKey && keySalt) {
+      user.encryptedPrivateKey = encryptedPrivateKey;
+      user.keySalt = keySalt;
+    }
+
+    await user.save();
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.log("Error in changePassword", error.message);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
