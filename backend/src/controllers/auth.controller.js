@@ -216,16 +216,17 @@ export const resendOTP = async (req, res) => {
 // Update user profile picture, full name, or bio
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic, fullName, bio } = req.body;
+    const { profilePic, fullName, bio, publicKey } = req.body;
     const userId = req.user._id;
 
-    if (!profilePic && !fullName && bio === undefined) {
+    if (!profilePic && !fullName && bio === undefined && !publicKey) {
       return res.status(400).json({ message: "No data to update" });
     }
 
     const updateData = {};
     if (fullName) updateData.fullName = fullName;
     if (bio !== undefined) updateData.bio = bio;
+    if (publicKey) updateData.publicKey = publicKey;
 
     if (profilePic && profilePic.startsWith("data:image")) {
       const uploadResponse = await cloudinary.uploader.upload(profilePic);
@@ -267,12 +268,19 @@ export const requestContactUpdate = async (req, res) => {
     const otp = generateOTP();
     user.otpHash = hashOTP(otp);
     user.otpExpireAt = Date.now() + 10 * 60 * 1000;
+    
+    if (newEmail) {
+      const oldOtp = generateOTP();
+      user.oldEmailOtpHash = hashOTP(oldOtp);
+      sendOTPEmail(user.email, oldOtp);
+      sendOTPEmail(newEmail, otp);
+    } else if (newPhone) {
+      sendOTPSMS(newPhone, otp);
+    }
+
     await user.save();
 
-    if (newPhone) sendOTPSMS(newPhone, otp);
-    if (newEmail) sendOTPEmail(newEmail, otp);
-
-    res.status(200).json({ message: "OTP sent to new contact" });
+    res.status(200).json({ message: newEmail ? "OTPs sent to old and new emails" : "OTP sent to new phone" });
   } catch (error) {
     console.log("Error in requestContactUpdate", error.message);
     res.status(500).json({ message: "Internal server error" });
@@ -281,7 +289,7 @@ export const requestContactUpdate = async (req, res) => {
 
 export const verifyContactUpdate = async (req, res) => {
   try {
-    const { newEmail, newPhone, otp } = req.body;
+    const { newEmail, newPhone, otp, oldEmailOtp } = req.body;
     const userId = req.user._id;
 
     if (!otp || (!newEmail && !newPhone)) {
@@ -290,17 +298,27 @@ export const verifyContactUpdate = async (req, res) => {
 
     const user = await User.findById(userId);
 
-    const isOTPValid =
-      user.otpHash === hashOTP(otp) && user.otpExpireAt > Date.now();
-
-    if (!isOTPValid) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
+    if (newEmail) {
+      if (!oldEmailOtp) {
+        return res.status(400).json({ message: "Both OTPs are required for email update" });
+      }
+      const isNewOtpValid = user.otpHash === hashOTP(otp) && user.otpExpireAt > Date.now();
+      const isOldOtpValid = user.oldEmailOtpHash === hashOTP(oldEmailOtp) && user.otpExpireAt > Date.now();
+      
+      if (!isNewOtpValid || !isOldOtpValid) {
+        return res.status(400).json({ message: "Invalid or expired OTP(s)" });
+      }
+      user.email = newEmail;
+    } else if (newPhone) {
+      const isOTPValid = user.otpHash === hashOTP(otp) && user.otpExpireAt > Date.now();
+      if (!isOTPValid) {
+        return res.status(400).json({ message: "Invalid or expired OTP" });
+      }
+      user.phone = newPhone;
     }
 
-    if (newEmail) user.email = newEmail;
-    if (newPhone) user.phone = newPhone;
-
     user.otpHash = undefined;
+    user.oldEmailOtpHash = undefined;
     user.otpExpireAt = undefined;
     await user.save();
 

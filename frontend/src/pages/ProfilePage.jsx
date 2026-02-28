@@ -16,7 +16,7 @@ const ProfilePage = () => {
     phone: authUser?.phone || "",
   });
 
-  const [otpModal, setOtpModal] = useState({ isOpen: false, type: "", otp: "" });
+  const [otpModal, setOtpModal] = useState({ isOpen: false, type: "", otp: "", oldEmailOtp: "" });
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -52,19 +52,19 @@ const ProfilePage = () => {
     const success = await requestContactUpdate(payload);
 
     if (success) {
-      setOtpModal({ isOpen: true, type, otp: "" });
+      setOtpModal({ isOpen: true, type, otp: "", oldEmailOtp: "" });
     }
   };
 
   const handleVerifyOTP = async () => {
     const payload = {
       otp: otpModal.otp,
-      ...(otpModal.type === "email" ? { newEmail: formData.email } : { newPhone: formData.phone })
+      ...(otpModal.type === "email" ? { newEmail: formData.email, oldEmailOtp: otpModal.oldEmailOtp } : { newPhone: formData.phone })
     };
 
     const success = await verifyContactUpdate(payload);
     if (success) {
-      setOtpModal({ isOpen: false, type: "", otp: "" });
+      setOtpModal({ isOpen: false, type: "", otp: "", oldEmailOtp: "" });
       setEditMode({ ...editMode, [otpModal.type]: false });
     }
   };
@@ -176,25 +176,38 @@ const ProfilePage = () => {
           <div className="bg-white dark:bg-[#16152a] rounded-2xl p-6 max-w-sm w-full border border-slate-200 dark:border-slate-800 shadow-xl">
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Verify Contact Update</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-              Please enter the OTP sent to your new {otpModal.type}.
+              {otpModal.type === "email"
+                ? "Please enter the OTP sent to both your old and new email."
+                : "Please enter the OTP sent to your new phone."}
             </p>
+
+            {otpModal.type === "email" && (
+              <input
+                type="text"
+                value={otpModal.oldEmailOtp}
+                onChange={(e) => setOtpModal({ ...otpModal, oldEmailOtp: e.target.value })}
+                placeholder="OTP sent to old email"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-[#1e1d33] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-[#6764f2] mb-4"
+              />
+            )}
+
             <input
               type="text"
               value={otpModal.otp}
               onChange={(e) => setOtpModal({ ...otpModal, otp: e.target.value })}
-              placeholder="Enter OTP"
+              placeholder={otpModal.type === "email" ? "OTP sent to new email" : "Enter OTP"}
               className="w-full px-4 py-3 bg-slate-50 dark:bg-[#1e1d33] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-[#6764f2] mb-4"
             />
             <div className="flex gap-3">
               <button
-                onClick={() => setOtpModal({ isOpen: false, type: "", otp: "" })}
+                onClick={() => setOtpModal({ isOpen: false, type: "", otp: "", oldEmailOtp: "" })}
                 className="flex-1 py-3 text-slate-600 dark:text-slate-300 font-semibold rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleVerifyOTP}
-                disabled={!otpModal.otp}
+                disabled={!otpModal.otp || (otpModal.type === "email" && !otpModal.oldEmailOtp)}
                 className="flex-1 py-3 bg-[#6764f2] text-white font-semibold rounded-xl hover:bg-[#524fcc] disabled:opacity-50 transition-colors"
               >
                 Verify

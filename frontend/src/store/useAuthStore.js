@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
+import { generateKeyPair, storePrivateKey, getLocalPrivateKey } from "../lib/crypto";
 
 const BASE_URL = "http://localhost:5001";
 
@@ -24,6 +25,7 @@ export const useAuthStore = create((set, get) => ({
       const res = await axiosInstance.get("/auth/check");
       set({ authUser: res.data });
       get().connectSocket();
+      get().initKeys(res.data);
     } catch (error) {
       console.log("Error in checkAuth", error);
       set({ authUser: null });
@@ -71,6 +73,7 @@ export const useAuthStore = create((set, get) => ({
 
       toast.success("Accound Verified Successfully");
       get().connectSocket();
+      get().initKeys(res.data);
     } catch (error) {
       toast.error(error.response?.data?.message || "OTP verification failed");
     } finally {
@@ -102,6 +105,7 @@ export const useAuthStore = create((set, get) => ({
       set({ authUser: res.data });
       toast.success("Logged in successfully");
       get().connectSocket();
+      get().initKeys(res.data);
     } catch (error) {
       if (error.response?.status === 403) {
         set({
@@ -187,5 +191,26 @@ export const useAuthStore = create((set, get) => ({
   // Disconnect socket connection
   disconnectSocket: () => {
     if (get().socket?.connected) get().socket.disconnect();
+  },
+
+  // Initialize E2EE Keys
+  initKeys: async (user) => {
+    try {
+      if (!user) return;
+      let hasPrivateKey = await getLocalPrivateKey(user._id);
+
+      // If user has no public key or no local private key, generate a new pair
+      if (!user.publicKey || !hasPrivateKey) {
+        console.log("Generating new E2EE KeyPair...");
+        const { publicKeyJwk, privateKeyJwk } = await generateKeyPair();
+        storePrivateKey(user._id, privateKeyJwk);
+        
+        // Save the public key to database
+        const res = await axiosInstance.put("/auth/update-profile", { publicKey: JSON.stringify(publicKeyJwk) });
+        set({ authUser: res.data });
+      }
+    } catch (error) {
+      console.error("Failed to initialize E2EE keys", error);
+    }
   },
 }));

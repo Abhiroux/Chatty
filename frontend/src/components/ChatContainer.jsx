@@ -83,13 +83,13 @@ const ChatContainer = () => {
                   className={`${isSent
                     ? "bg-[#6764f2] text-white rounded-2xl rounded-br-none shadow-md shadow-[#6764f2]/20"
                     : "bg-white dark:bg-[#1e1d33] text-slate-800 dark:text-slate-200 rounded-2xl rounded-bl-none shadow-sm border border-slate-100 dark:border-slate-800"
-                    } p-3 sm:p-4`}
+                    } flex flex-col ${message.image && !message.text ? "p-1.5" : "px-4 py-2"}`}
                 >
                   {message.image && (
                     <img
                       src={message.image}
                       alt="message attachment"
-                      className="sm:max-w-[200px] rounded-lg mb-2 object-cover border border-black/10 cursor-pointer hover:opacity-90 transition-opacity"
+                      className={`sm:max-w-[200px] rounded-lg ${message.text ? "mb-2" : "mb-0"} object-cover border border-black/10 cursor-pointer hover:opacity-90 transition-opacity`}
                       onClick={() => setFullscreenImage(message.image)}
                     />
                   )}
