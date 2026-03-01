@@ -10,7 +10,7 @@ import {
   unwrapPrivateKey,
 } from "../lib/crypto";
 
-const BASE_URL = "http://localhost:5001";
+const BASE_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
 
 export const useAuthStore = create((set, get) => ({
   // State
@@ -142,7 +142,7 @@ export const useAuthStore = create((set, get) => ({
       get().disconnectSocket();
     } catch (error) {
       toast.error("Something went wrong");
-      console.log(error.response.data.message);
+      console.log(error.response?.data?.message);
     }
   },
 

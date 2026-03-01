@@ -5,6 +5,7 @@ import {
   sendRequest,
   acceptRequest,
   rejectRequest,
+  cancelRequest,
   getRequests,
   getSentRequests,
   getFriends
@@ -16,6 +17,7 @@ router.get("/search", protectRoute, searchUsers);
 router.post("/request/:id", protectRoute, sendRequest);
 router.post("/accept/:id", protectRoute, acceptRequest);
 router.post("/reject/:id", protectRoute, rejectRequest);
+router.delete("/cancel/:id", protectRoute, cancelRequest);
 router.get("/requests", protectRoute, getRequests);
 router.get("/sent-requests", protectRoute, getSentRequests);
 router.get("/friends", protectRoute, getFriends);

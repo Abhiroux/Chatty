@@ -52,9 +52,9 @@ export const signup = async (req, res) => {
       isVerified: false,
     });
 
-    // Send OTP via SMS or Email
-    if (phone) sendOTPSMS(phone, otp);
-    if (email) sendOTPEmail(email, otp);
+    // Send OTP via SMS or Email (fire-and-forget with error logging)
+    if (phone) sendOTPSMS(phone, otp).catch(err => console.error("Failed to send SMS:", err.message));
+    if (email) sendOTPEmail(email, otp).catch(err => console.error("Failed to send email:", err.message));
 
     res.status(201).json({
       message: "OTP sent successfully",
@@ -93,8 +93,8 @@ export const login = async (req, res) => {
       user.otpExpireAt = Date.now() + 10 * 60 * 1000;
       await user.save();
 
-      if (user.phone) sendOTPSMS(user.phone, otp);
-      if (user.email) sendOTPEmail(user.email, otp);
+      if (user.phone) sendOTPSMS(user.phone, otp).catch(err => console.error("Failed to send SMS:", err.message));
+      if (user.email) sendOTPEmail(user.email, otp).catch(err => console.error("Failed to send email:", err.message));
 
       return res.status(403).json({
         message: "Please verify your account first",
@@ -226,7 +226,7 @@ export const updateProfile = async (req, res) => {
     const { profilePic, fullName, bio, publicKey, encryptedPrivateKey, keySalt } = req.body;
     const userId = req.user._id;
 
-    if (!profilePic && !fullName && bio === undefined && !publicKey && !encryptedPrivateKey) {
+    if (!profilePic && !fullName && (bio === undefined) && !publicKey && !encryptedPrivateKey) {
       return res.status(400).json({ message: "No data to update" });
     }
 
@@ -246,7 +246,7 @@ export const updateProfile = async (req, res) => {
       userId,
       updateData,
       { new: true },
-    );
+    ).select("-password -otpHash -oldEmailOtpHash -otpExpireAt");
     res.status(200).json(updatedUser);
   } catch (error) {
     console.log("error in update profile:", error);
@@ -281,10 +281,10 @@ export const requestContactUpdate = async (req, res) => {
     if (newEmail) {
       const oldOtp = generateOTP();
       user.oldEmailOtpHash = hashOTP(oldOtp);
-      sendOTPEmail(user.email, oldOtp);
-      sendOTPEmail(newEmail, otp);
+      sendOTPEmail(user.email, oldOtp).catch(err => console.error("Failed to send email:", err.message));
+      sendOTPEmail(newEmail, otp).catch(err => console.error("Failed to send email:", err.message));
     } else if (newPhone) {
-      sendOTPSMS(newPhone, otp);
+      sendOTPSMS(newPhone, otp).catch(err => console.error("Failed to send SMS:", err.message));
     }
 
     await user.save();
@@ -351,7 +351,8 @@ export const verifyContactUpdate = async (req, res) => {
 // Check if user is authenticated
 export const checkAuth = (req, res) => {
   try {
-    res.status(200).json(req.user);
+    const { _id, fullName, email, phone, profilePic, bio, publicKey, encryptedPrivateKey, keySalt } = req.user;
+    res.status(200).json({ _id, fullName, email, phone, profilePic, bio, publicKey, encryptedPrivateKey, keySalt });
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });

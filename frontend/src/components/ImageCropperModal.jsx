@@ -81,7 +81,7 @@ const ImageCropperModal = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1
                         max={3}
                         step={0.1}
                         aria-labelledby="Zoom"
-                        onChange={(e) => setZoom(e.target.value)}
+                        onChange={(e) => setZoom(parseFloat(e.target.value))}
                         className="flex-1 w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-[#6764f2]"
                     />
                     <ZoomIn className="w-5 h-5 text-slate-500" />
