@@ -1,32 +1,36 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useConnectionStore } from "../store/useConnectionStore";
-import { Search, UserPlus, UserCheck, X, Check, Mail, Phone, Info, MapPin, SearchIcon, ImageIcon } from "lucide-react";
+import { Search, UserPlus, UserCheck, UserX, Send, X, Check, Mail, Phone, Info, SearchIcon, ImageIcon } from "lucide-react";
 import { formatMessageTime } from "../lib/utils";
 
 const ConnectionsPage = () => {
     const {
         friends,
         friendRequests,
+        sentRequests,
         searchResults,
         isLoading,
         getFriends,
         getFriendRequests,
+        getSentRequests,
         searchUsers,
         sendRequest,
         acceptRequest,
         rejectRequest,
+        cancelRequest,
     } = useConnectionStore();
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [activeTab, setActiveTab] = useState("friends"); // 'friends', 'requests', 'search'
+    const [activeTab, setActiveTab] = useState("friends"); // 'friends', 'requests', 'sent', 'search'
     const [selectedUser, setSelectedUser] = useState(null); // Modals for user info
     const [fullscreenImage, setFullscreenImage] = useState(false);
 
     useEffect(() => {
         getFriends();
         getFriendRequests();
-    }, [getFriends, getFriendRequests]);
+        getSentRequests();
+    }, [getFriends, getFriendRequests, getSentRequests]);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -178,6 +182,18 @@ const ConnectionsPage = () => {
                             <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{friendRequests.length}</span>
                         )}
                     </button>
+                    <button
+                        onClick={() => setActiveTab("sent")}
+                        className={`px-4 py-2.5 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${activeTab === "sent"
+                            ? "border-[#6764f2] text-[#6764f2] dark:text-[#6764f2]"
+                            : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                            }`}
+                    >
+                        Sent
+                        {sentRequests.length > 0 && (
+                            <span className="bg-[#6764f2] text-white text-[10px] px-2 py-0.5 rounded-full">{sentRequests.length}</span>
+                        )}
+                    </button>
                     {activeTab === "search" && (
                         <button
                             className={`px-4 py-2.5 font-medium text-sm transition-colors border-b-2 border-[#6764f2] text-[#6764f2] dark:text-[#6764f2]`}
@@ -245,6 +261,36 @@ const ConnectionsPage = () => {
                                                 <Check className="size-4" /> Accept
                                             </button>
                                         </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {!isLoading && activeTab === "sent" && (
+                        sentRequests.length === 0 ? (
+                            <div className="p-12 text-center flex flex-col items-center">
+                                <Send className="size-12 text-slate-300 dark:text-slate-600 mb-4" />
+                                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">No sent requests</h3>
+                                <p className="text-sm text-slate-500 mt-1">You haven't sent any friend requests.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {sentRequests.map(user => (
+                                    <div key={user._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+                                        <div className="flex items-center gap-4 cursor-pointer" onClick={() => setSelectedUser(user)}>
+                                            <img src={user.profilePic || "/avatar.png"} alt={user.fullName} className="size-12 rounded-full object-cover shadow-sm bg-slate-100 dark:bg-slate-800" />
+                                            <div>
+                                                <h4 className="font-semibold text-slate-900 dark:text-slate-100">{user.fullName}</h4>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">Request pending</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => cancelRequest(user._id)}
+                                            className="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg transition-colors flex items-center gap-1"
+                                        >
+                                            <UserX className="size-4" /> Cancel
+                                        </button>
                                     </div>
                                 ))}
                             </div>

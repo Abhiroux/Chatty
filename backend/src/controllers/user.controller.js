@@ -10,7 +10,8 @@ export const searchUsers = async (req, res) => {
       return res.status(400).json({ error: "Query is required" });
     }
 
-    const regex = new RegExp(query, "i");
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escapedQuery, "i");
     const users = await User.find({
       _id: { $ne: loggedInUserId },
       $or: [
@@ -127,6 +128,43 @@ export const rejectRequest = async (req, res) => {
     res.status(200).json({ message: "Request rejected successfully" });
   } catch (error) {
     console.error("Error in rejectRequest", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// Cancel a sent friend request (by the sender)
+export const cancelRequest = async (req, res) => {
+  try {
+    const senderId = req.user._id;
+    const { id: receiverId } = req.params;
+
+    const sender = await User.findById(senderId);
+    const receiver = await User.findById(receiverId);
+
+    if (!sender || !receiver) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if request actually exists
+    if (!sender.sentFriendRequests.includes(receiverId)) {
+      return res.status(400).json({ error: "No sent request found" });
+    }
+
+    // Remove from sender's sentFriendRequests
+    sender.sentFriendRequests = sender.sentFriendRequests.filter(
+      (id) => id.toString() !== receiverId.toString()
+    );
+    await sender.save();
+
+    // Remove from receiver's friendRequests
+    receiver.friendRequests = receiver.friendRequests.filter(
+      (id) => id.toString() !== senderId.toString()
+    );
+    await receiver.save();
+
+    res.status(200).json({ message: "Request cancelled successfully" });
+  } catch (error) {
+    console.error("Error in cancelRequest", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
