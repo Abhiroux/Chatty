@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
-import { X, Phone, Video, Info, Mail, User as UserIcon, Calendar, ImageIcon } from "lucide-react";
+import { X, Info, Mail, Phone, User as UserIcon, Calendar, ImageIcon } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 

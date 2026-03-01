@@ -27,15 +27,16 @@ const processDecryption = async (message, privateKey, myId) => {
         return { ...message, text: "[Cannot decrypt message: Invalid Key]" };
     }
     
-    // Decrypt text
+    // Decrypt text — create a new object to avoid mutating state
+    const decryptedMessage = { ...message };
     if (message.text) {
-      message.text = await decryptText(message.text, message.iv, sessionKey);
+      decryptedMessage.text = await decryptText(message.text, message.iv, sessionKey);
     }
+    return decryptedMessage;
   } catch(error) {
     console.log("Error decrypting message", error);
     return { ...message, text: "[Message could not be decrypted]" };
   }
-  return message;
 };
 
 export const useChatStore = create((set, get) => ({

@@ -3,7 +3,7 @@ import { useChatStore } from "../store/useChatStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import { Users, Search, UserPlus, Edit, Check, X } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
-import { useFriendStore } from "../store/useFriendStore";
+import { useConnectionStore } from "../store/useConnectionStore";
 
 const Sidebar = () => {
   const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } = useChatStore();
@@ -11,10 +11,10 @@ const Sidebar = () => {
   const [showOnlineUsers, setShowOnlineUsers] = useState(false);
 
   const {
-    searchResults, searchUsers, isSearching, friendRequests, getFriendRequests,
-    sendFriendRequest, acceptFriendRequest, rejectFriendRequest, clearSearch,
+    searchResults, searchUsers, isLoading: isSearching, friendRequests, getFriendRequests,
+    sendRequest: sendFriendRequest, acceptRequest: acceptFriendRequest, rejectRequest: rejectFriendRequest,
     getSentRequests, sentRequests
-  } = useFriendStore();
+  } = useConnectionStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [view, setView] = useState("contacts"); // "contacts", "search", "requests"
@@ -24,6 +24,9 @@ const Sidebar = () => {
     getFriendRequests();
     getSentRequests();
   }, [getUsers, getFriendRequests, getSentRequests]);
+
+  // Count only online users who are in the contacts list (friends)
+  const onlineFriendsCount = users.filter((user) => onlineUsers.includes(user._id)).length;
 
   const filteredUsers = showOnlineUsers
     ? users.filter((user) => onlineUsers.includes(user._id))
@@ -37,7 +40,7 @@ const Sidebar = () => {
       searchUsers(value);
     } else {
       setView("contacts");
-      clearSearch();
+      searchUsers("");
     }
   };
 
@@ -108,7 +111,7 @@ const Sidebar = () => {
             <span className="text-sm text-slate-600 dark:text-slate-400">Online only</span>
           </label>
           <span className="text-xs text-slate-400">
-            ({Math.max(0, onlineUsers.length - 1)})
+            ({onlineFriendsCount})
           </span>
         </div>
       )}
@@ -129,8 +132,8 @@ const Sidebar = () => {
                     key={user._id}
                     onClick={() => setSelectedUser(user)}
                     className={`group flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors relative ${isSelected
-                        ? "bg-[#6764f2]/10 dark:bg-white/5"
-                        : "hover:bg-slate-100 dark:hover:bg-white/5"
+                      ? "bg-[#6764f2]/10 dark:bg-white/5"
+                      : "hover:bg-slate-100 dark:hover:bg-white/5"
                       }`}
                   >
                     <div className="relative shrink-0 mx-auto lg:mx-0">
