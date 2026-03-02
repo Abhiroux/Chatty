@@ -8,6 +8,7 @@ function getTransporter() {
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT,
       secure: true,
+      family: 4, // Force IPv4 (Render doesn't support IPv6)
       auth: {
         user: process.env.SMTP_EMAIL,
         pass: process.env.SMTP_PASS,
