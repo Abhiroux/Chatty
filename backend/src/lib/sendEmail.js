@@ -7,7 +7,7 @@ function getTransporter() {
     transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT,
-      secure: true,
+      secure: process.env.SMTP_PORT == 465, // true for 465 (SSL), false for 587 (STARTTLS)
       family: 4, // Force IPv4 (Render doesn't support IPv6)
       auth: {
         user: process.env.SMTP_EMAIL,
