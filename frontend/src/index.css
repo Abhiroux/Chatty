@@ -68,3 +68,30 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* Mobile viewport height fix — ensures full height on iOS Safari */
+@supports (height: 100dvh) {
+    .h-screen {
+        height: 100dvh;
+    }
+}
+
+/* Smooth touch scrolling */
+.custom-scrollbar {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure touch targets are responsive */
+@media (pointer: coarse) {
+    button, a, [role="button"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+/* Safe area padding for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    footer {
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    }
+}

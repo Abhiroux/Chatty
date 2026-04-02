@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useConnectionStore } from "../store/useConnectionStore";
 import { Search, UserPlus, UserCheck, UserX, Send, X, Check, Mail, Phone, Info, SearchIcon, ImageIcon } from "lucide-react";
-import { formatMessageTime } from "../lib/utils";
 
 const ConnectionsPage = () => {
     const {
@@ -83,7 +82,7 @@ const ConnectionsPage = () => {
                                     <div>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">Bio</p>
                                         <p className="text-sm font-medium text-slate-900 dark:text-slate-100 mt-0.5">
-                                            {user.bio || <span className="text-slate-400 italic">This user hasn't added a bio yet.</span>}
+                                            {user.bio || <span className="text-slate-400 italic">This user hasn&apos;t added a bio yet.</span>}
                                         </p>
                                     </div>
                                 </div>
@@ -137,7 +136,7 @@ const ConnectionsPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-[#111022] pt-20 pb-10">
+        <div className="min-h-screen bg-slate-50 dark:bg-[#111022] pt-16 sm:pt-20 pb-10">
             <div className="max-w-4xl mx-auto p-4 sm:p-6">
 
                 {/* Page Header */}
@@ -234,7 +233,7 @@ const ConnectionsPage = () => {
                             <div className="p-12 text-center flex flex-col items-center">
                                 <UserCheck className="size-12 text-slate-300 dark:text-slate-600 mb-4" />
                                 <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">No pending requests</h3>
-                                <p className="text-sm text-slate-500 mt-1">You're all caught up!</p>
+                                <p className="text-sm text-slate-500 mt-1">You&apos;re all caught up!</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -272,7 +271,7 @@ const ConnectionsPage = () => {
                             <div className="p-12 text-center flex flex-col items-center">
                                 <Send className="size-12 text-slate-300 dark:text-slate-600 mb-4" />
                                 <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">No sent requests</h3>
-                                <p className="text-sm text-slate-500 mt-1">You haven't sent any friend requests.</p>
+                                <p className="text-sm text-slate-500 mt-1">You haven&apos;t sent any friend requests.</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

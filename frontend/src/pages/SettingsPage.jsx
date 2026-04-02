@@ -19,10 +19,10 @@ const THEME_OPTIONS = [
 
 const SettingsPage = () => {
   // Get theme state and setter from store
-  const { theme, setTheme, activeTheme } = useThemeStore();
+  const { theme, setTheme } = useThemeStore();
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#111022] container mx-auto px-4 sm:px-6 pt-24 pb-10 max-w-5xl">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#111022] container mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-10 max-w-5xl">
       <div className="space-y-8">
 
         <div className="flex flex-col gap-2">
