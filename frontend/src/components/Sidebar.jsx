@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
-import { Users, Search, UserPlus, Check, X } from "lucide-react";
+import { Search, UserPlus, Check, X } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 
@@ -47,12 +47,12 @@ const Sidebar = () => {
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
-    <aside className="w-full md:w-80 lg:w-96 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-[#16152a] backdrop-blur-xl h-full shrink-0 relative z-20 transition-all duration-200">
+    <aside className="w-full h-full flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-[#16152a] backdrop-blur-xl shrink-0 relative z-20 transition-all duration-200">
 
       {/* Top Bar: User Profile & Actions */}
       <div className="flex items-center justify-between p-4 pb-2 border-b border-transparent">
         <div className="flex items-center gap-3">
-          <div className="relative group cursor-pointer hidden lg:block">
+          <div className="relative group cursor-pointer">
             <div
               className="bg-center bg-no-repeat bg-cover rounded-full size-10 ring-2 ring-[#6764f2]/20"
               style={{ backgroundImage: `url(${authUser?.profilePic || "./avatar.png"})` }}
@@ -60,15 +60,12 @@ const Sidebar = () => {
             <div className="absolute bottom-0 right-0 size-3 bg-green-500 border-2 border-white dark:border-[#16152a] rounded-full"></div>
           </div>
           <div className="flex flex-col">
-            <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 hidden lg:block">Chats</h2>
-            <div className="lg:hidden flex items-center justify-center p-2">
-              <Users className="size-6 text-slate-900 dark:text-slate-100" />
-            </div>
+            <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">Chats</h2>
           </div>
         </div>
 
         <button
-          className="relative flex items-center justify-center size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400 hidden lg:flex"
+          className="relative flex items-center justify-center size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
           onClick={() => setView(view === "requests" ? "contacts" : "requests")}
           title="Friend Requests"
         >
@@ -82,7 +79,7 @@ const Sidebar = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="px-4 py-3 hidden lg:block">
+      <div className="px-4 py-3">
         <div className="relative group">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 group-focus-within:text-[#6764f2] transition-colors">
             <Search className="size-4" />
@@ -99,7 +96,7 @@ const Sidebar = () => {
 
       {/* Filters */}
       {view === "contacts" && (
-        <div className="px-4 pb-2 hidden lg:flex items-center gap-2">
+        <div className="px-4 pb-2 flex items-center gap-2">
           <label className="cursor-pointer flex items-center gap-2">
             <input
               type="checkbox"
@@ -136,7 +133,7 @@ const Sidebar = () => {
                       : "hover:bg-slate-100 dark:hover:bg-white/5"
                       }`}
                   >
-                    <div className="relative shrink-0 mx-auto lg:mx-0">
+                    <div className="relative shrink-0">
                       <div
                         className="bg-center bg-no-repeat bg-cover rounded-full size-12"
                         style={{ backgroundImage: `url(${user.profilePic || "./avatar.png"})` }}
@@ -146,7 +143,7 @@ const Sidebar = () => {
                       )}
                     </div>
 
-                    <div className="flex-col flex-1 min-w-0 hidden lg:flex">
+                    <div className="flex flex-col flex-1 min-w-0">
                       <div className="flex justify-between items-baseline mb-0.5">
                         <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{user.fullName}</p>
                       </div>
@@ -156,7 +153,7 @@ const Sidebar = () => {
                     </div>
 
                     {isSelected && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#6764f2] rounded-r-full hidden lg:block"></div>
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#6764f2] rounded-r-full"></div>
                     )}
                   </div>
                 );
@@ -179,18 +176,18 @@ const Sidebar = () => {
                 return (
                   <div key={user._id} className="w-full p-3 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-white/5 transition-colors rounded-xl group cursor-pointer">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="relative shrink-0 mx-auto lg:mx-0">
+                      <div className="relative shrink-0">
                         <div
                           className="bg-center bg-no-repeat bg-cover rounded-full size-10"
                           style={{ backgroundImage: `url(${user.profilePic || "./avatar.png"})` }}
                         ></div>
                       </div>
-                      <div className="hidden lg:flex flex-col text-left min-w-0">
+                      <div className="flex flex-col text-left min-w-0">
                         <div className="font-medium text-slate-900 dark:text-slate-100 truncate text-sm">{user.fullName}</div>
                       </div>
                     </div>
 
-                    <div className="hidden lg:block">
+                    <div>
                       {isFriend ? (
                         <span className="text-[10px] font-bold tracking-wide uppercase text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-white/5 px-2 py-1 rounded-full">Friend</span>
                       ) : isSent ? (
@@ -213,9 +210,9 @@ const Sidebar = () => {
 
         {view === "requests" && (
           <div className="px-1 space-y-2">
-            <h3 className="px-2 pt-2 text-xs font-bold tracking-wider uppercase text-slate-500 mb-1 hidden lg:block">Friend Requests</h3>
+            <h3 className="px-2 pt-2 text-xs font-bold tracking-wider uppercase text-slate-500 mb-1">Friend Requests</h3>
             {friendRequests.length === 0 ? (
-              <div className="text-center text-slate-500 py-4 text-sm hidden lg:block">No new requests</div>
+              <div className="text-center text-slate-500 py-4 text-sm">No new requests</div>
             ) : (
               friendRequests.map((req) => (
                 <div key={req._id} className="w-full p-3 flex flex-col gap-3 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white/50 dark:bg-[#1e1d33]/50">
@@ -226,12 +223,12 @@ const Sidebar = () => {
                         style={{ backgroundImage: `url(${req.profilePic || "./avatar.png"})` }}
                       ></div>
                     </div>
-                    <div className="text-left min-w-0 flex-1 hidden lg:block">
+                    <div className="text-left min-w-0 flex-1">
                       <div className="font-medium text-slate-900 dark:text-slate-100 truncate text-sm">{req.fullName}</div>
                     </div>
                   </div>
 
-                  <div className="flex gap-2 w-full mt-1 hidden lg:flex">
+                  <div className="flex gap-2 w-full mt-1">
                     <button
                       className="flex-1 bg-[#6764f2] hover:bg-[#524fcc] text-white py-1.5 text-xs font-semibold rounded-lg shadow-sm shadow-[#6764f2]/30 transition-colors flex items-center justify-center gap-1"
                       onClick={() => acceptFriendRequest(req._id, () => {

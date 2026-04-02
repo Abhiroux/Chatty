@@ -77,15 +77,15 @@ const MessageInput = () => {
   };
 
   return (
-    <footer className="p-4 sm:p-6 pt-2 shrink-0 bg-transparent relative">
+    <footer className="p-3 sm:p-4 lg:p-6 pt-2 shrink-0 bg-transparent relative">
       {/* Display image preview if selected */}
       {imagePreview && (
-        <div className="mb-4">
+        <div className="mb-3">
           <div className="relative inline-block mt-1 group cursor-pointer overflow-hidden rounded-xl border border-[#6764f2]/30 shadow-sm">
             <img
               src={imagePreview}
               alt="Preview"
-              className="w-32 sm:w-64 h-24 sm:h-40 object-cover"
+              className="w-28 sm:w-64 h-20 sm:h-40 object-cover"
             />
             <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
             <button
@@ -105,59 +105,54 @@ const MessageInput = () => {
           <EmojiPicker
             onEmojiClick={onEmojiClick}
             theme={activeTheme === "dark" ? "dark" : "light"}
+            width={window.innerWidth < 640 ? 280 : 350}
+            height={window.innerWidth < 640 ? 350 : 400}
           />
         </div>
       )}
 
-      {/* Message input form */}
-      <form onSubmit={handleSendMessage} className="bg-white dark:bg-[#16152a] border border-slate-200 dark:border-slate-800 rounded-2xl p-2 flex flex-col sm:flex-row sm:items-end gap-2 shadow-lg dark:shadow-black/20 relative z-20 transition-all">
+      {/* Message input form — single row layout for all sizes */}
+      <form onSubmit={handleSendMessage} className="bg-white dark:bg-[#16152a] border border-slate-200 dark:border-slate-800 rounded-2xl p-1.5 sm:p-2 flex items-center gap-1 sm:gap-2 shadow-lg dark:shadow-black/20 relative z-20 transition-all">
+        <button
+          type="button"
+          className={`p-2 sm:p-2.5 rounded-xl transition-all shrink-0 ${imagePreview ? "text-[#6764f2]" : "text-slate-400 hover:text-[#6764f2] hover:bg-slate-100 dark:hover:bg-white/5"
+            }`}
+          onClick={() => fileInputRef.current?.click()}
+          title="Attach Photo"
+        >
+          <PlusCircle className="size-5 sm:size-6" />
+        </button>
+        <input
+          type="file"
+          className="hidden"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleImageChange}
+        />
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          <button
-            type="button"
-            className={`p-2 sm:p-3 rounded-xl transition-all shrink-0 ${imagePreview ? "text-[#6764f2]" : "text-slate-400 hover:text-[#6764f2] hover:bg-slate-100 dark:hover:bg-white/5"
-              }`}
-            onClick={() => fileInputRef.current?.click()}
-            title="Attach Photo"
-          >
-            <PlusCircle className="size-5 sm:size-6" />
-          </button>
-          <input
-            type="file"
-            className="hidden"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleImageChange}
-          />
-        </div>
+        <input
+          type="text"
+          className="flex-1 min-w-0 bg-transparent border-none py-2 px-1 sm:px-2 text-sm sm:text-base text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-0 outline-none"
+          placeholder="Type a message..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
 
-        <div className="flex-1 py-1 sm:py-3 px-2 sm:px-0">
-          <input
-            type="text"
-            className="w-full bg-transparent border-none p-0 text-sm sm:text-base text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-0 outline-none"
-            placeholder="Type a message..."
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-        </div>
-
-        <div className="flex items-center justify-end gap-1 pb-1 sm:pb-0 px-2 sm:px-0">
-          <button
-            type="button"
-            className={`hidden sm:flex p-2 rounded-xl transition-all shrink-0 ${showEmojiPicker ? "text-yellow-500 bg-slate-100 dark:bg-white/5" : "text-slate-400 hover:text-yellow-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
-            title="Add emoji"
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          >
-            <Smile className="size-5" />
-          </button>
-          <button
-            type="submit"
-            className="p-2.5 sm:p-3 bg-[#6764f2] hover:bg-[#524fcc] text-white rounded-xl shadow-md shadow-[#6764f2]/30 transition-all shrink-0 sm:ml-1 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!text.trim() && !imagePreview}
-          >
-            <Send className="size-5 ml-0.5" />
-          </button>
-        </div>
+        <button
+          type="button"
+          className={`hidden sm:flex p-2 rounded-xl transition-all shrink-0 ${showEmojiPicker ? "text-yellow-500 bg-slate-100 dark:bg-white/5" : "text-slate-400 hover:text-yellow-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+          title="Add emoji"
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+        >
+          <Smile className="size-5" />
+        </button>
+        <button
+          type="submit"
+          className="p-2.5 sm:p-3 bg-[#6764f2] hover:bg-[#524fcc] text-white rounded-xl shadow-md shadow-[#6764f2]/30 transition-all shrink-0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={!text.trim() && !imagePreview}
+        >
+          <Send className="size-4 sm:size-5 ml-0.5" />
+        </button>
       </form>
 
       {/* Cropper Modal - rendered via portal to escape overflow-hidden */}

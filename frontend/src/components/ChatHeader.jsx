@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { X, Info, Mail, Phone, User as UserIcon, Calendar, ImageIcon } from "lucide-react";
+import { X, Info, Mail, Phone, User as UserIcon, Calendar, ImageIcon, ArrowLeft } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 
@@ -14,42 +14,54 @@ const ChatHeader = () => {
 
   return (
     <>
-      <header className="h-20 shrink-0 px-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white/70 dark:bg-[#16152a]/70 backdrop-blur-md sticky top-0 z-30">
-        <div
-          className="flex items-center gap-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 p-2 rounded-xl transition-colors"
-          onClick={() => setShowProfile(true)}
-        >
-          <div className="relative">
-            <div
-              className="bg-center bg-no-repeat bg-cover rounded-full size-11 ring-2 ring-slate-200 dark:ring-slate-700 shadow-sm"
-              style={{ backgroundImage: `url(${selectedUser.profilePic || "./avatar.png"})` }}
-            ></div>
-            {isOnline && (
-              <div className="absolute bottom-0 right-0 size-3 bg-green-500 border-2 border-white dark:border-[#16152a] rounded-full"></div>
-            )}
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-900 dark:text-slate-100 text-lg leading-tight">{selectedUser.fullName}</h3>
-            <p className="text-xs text-[#6764f2] font-medium flex items-center gap-1 mt-0.5">
-              {isOnline ? (
-                <>
-                  <span className="inline-block size-1.5 rounded-full bg-[#6764f2] animate-pulse"></span>
-                  Online
-                </>
-              ) : (
-                <span className="text-slate-500">Offline</span>
+      <header className="h-16 sm:h-20 shrink-0 px-3 sm:px-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white/70 dark:bg-[#16152a]/70 backdrop-blur-md sticky top-0 z-30">
+        <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+          {/* Back button — visible on mobile to return to sidebar */}
+          <button
+            className="md:hidden flex items-center justify-center size-9 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 transition-colors shrink-0"
+            onClick={() => setSelectedUser(null)}
+            title="Back to Chats"
+          >
+            <ArrowLeft className="size-5" />
+          </button>
+
+          <div
+            className="flex items-center gap-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 p-1.5 sm:p-2 rounded-xl transition-colors min-w-0 flex-1"
+            onClick={() => setShowProfile(true)}
+          >
+            <div className="relative shrink-0">
+              <div
+                className="bg-center bg-no-repeat bg-cover rounded-full size-9 sm:size-11 ring-2 ring-slate-200 dark:ring-slate-700 shadow-sm"
+                style={{ backgroundImage: `url(${selectedUser.profilePic || "./avatar.png"})` }}
+              ></div>
+              {isOnline && (
+                <div className="absolute bottom-0 right-0 size-2.5 sm:size-3 bg-green-500 border-2 border-white dark:border-[#16152a] rounded-full"></div>
               )}
-            </p>
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-tight truncate">{selectedUser.fullName}</h3>
+              <p className="text-xs text-[#6764f2] font-medium flex items-center gap-1 mt-0.5">
+                {isOnline ? (
+                  <>
+                    <span className="inline-block size-1.5 rounded-full bg-[#6764f2] animate-pulse"></span>
+                    Online
+                  </>
+                ) : (
+                  <span className="text-slate-500">Offline</span>
+                )}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 lg:gap-3">
-          <button className="size-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 transition-colors" title="Contact Info" onClick={() => setShowProfile(true)}>
+        <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 shrink-0">
+          <button className="size-9 sm:size-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 transition-colors" title="Contact Info" onClick={() => setShowProfile(true)}>
             <Info className="size-5" />
           </button>
           <div className="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-1 hidden sm:block"></div>
+          {/* Close button — hidden on mobile (back button replaces it) */}
           <button
-            className="size-10 flex items-center justify-center rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+            className="hidden md:flex size-10 items-center justify-center rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
             title="Close Chat"
             onClick={() => setSelectedUser(null)}
           >
@@ -83,13 +95,13 @@ const ChatHeader = () => {
                   <img
                     src={selectedUser.profilePic || "/avatar.png"}
                     alt={selectedUser.fullName}
-                    className="size-32 rounded-full object-cover ring-4 ring-white dark:ring-[#16152a] shadow-lg transition-transform hover:scale-105"
+                    className="size-28 sm:size-32 rounded-full object-cover ring-4 ring-white dark:ring-[#16152a] shadow-lg transition-transform hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <ImageIcon className="text-white size-8" />
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-4">{selectedUser.fullName}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 mt-4">{selectedUser.fullName}</h3>
                 <p className="text-sm font-medium mt-1">
                   {isOnline ? (
                     <span className="text-[#6764f2] bg-[#6764f2]/10 px-3 py-1 rounded-full">Online</span>
@@ -99,9 +111,9 @@ const ChatHeader = () => {
                 </p>
               </div>
 
-              <div className="px-6 py-6 space-y-6">
+              <div className="px-4 sm:px-6 py-6 space-y-6">
                 {/* Info block */}
-                <div className="space-y-4 bg-slate-50 dark:bg-[#1e1d33] p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <div className="space-y-4 bg-slate-50 dark:bg-[#1e1d33] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
                   <div className="flex items-start gap-3">
                     <UserIcon className="size-5 text-slate-400 mt-0.5" />
                     <div>

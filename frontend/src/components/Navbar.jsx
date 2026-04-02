@@ -8,23 +8,23 @@ const Navbar = () => {
   return (
     <>
       <header className="fixed w-full top-0 z-40 bg-white/70 dark:bg-[#16152a]/70 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
-        <div className="container mx-auto px-4 sm:px-6 h-16">
+        <div className="container mx-auto px-3 sm:px-6 h-14 sm:h-16">
           <div className="flex items-center justify-between h-full">
             <div className="flex items-center gap-8">
               <Link
                 to="/"
-                className="flex items-center gap-2.5 hover:opacity-80 transition-all group"
+                className="flex items-center gap-2 hover:opacity-80 transition-all group"
               >
-                <div className="size-9 rounded-xl bg-[#6764f2]/10 dark:bg-[#6764f2]/20 flex items-center justify-center group-hover:bg-[#6764f2]/20 dark:group-hover:bg-[#6764f2]/30 transition-colors">
-                  <MessageSquare className="size-5 text-[#6764f2]" />
+                <div className="size-8 sm:size-9 rounded-xl bg-[#6764f2]/10 dark:bg-[#6764f2]/20 flex items-center justify-center group-hover:bg-[#6764f2]/20 dark:group-hover:bg-[#6764f2]/30 transition-colors">
+                  <MessageSquare className="size-4 sm:size-5 text-[#6764f2]" />
                 </div>
-                <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">Chatty</h1>
+                <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">Chatty</h1>
               </Link>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5 sm:gap-2">
               <Link
                 to={"/settings"}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors`}
+                className="flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
               >
                 <Settings className="size-5" />
                 <span className="hidden sm:inline font-medium text-sm">Settings</span>
@@ -32,17 +32,17 @@ const Navbar = () => {
 
               {authUser && (
                 <>
-                  <Link to={"/connections"} className={`flex items-center gap-2 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors`}>
+                  <Link to={"/connections"} className="flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                     <Users className="size-5" />
-                    <span className="hidden sm:inline font-medium text-sm">Connections</span>
+                    <span className="hidden md:inline font-medium text-sm">Connections</span>
                   </Link>
-                  <Link to={"/profile"} className={`flex items-center gap-2 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors`}>
+                  <Link to={"/profile"} className="flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                     <User className="size-5" />
-                    <span className="hidden sm:inline font-medium text-sm">Profile</span>
+                    <span className="hidden md:inline font-medium text-sm">Profile</span>
                   </Link>
-                  <button className="flex items-center gap-2 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-colors" onClick={logout}>
+                  <button className="flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-colors" onClick={logout}>
                     <LogOut className="size-5" />
-                    <span className="hidden sm:inline font-medium text-sm">Logout</span>
+                    <span className="hidden md:inline font-medium text-sm">Logout</span>
                   </button>
                 </>
               )}
