@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
+import { useAuthStore } from "./useAuthStore";
+import { playNotification } from "../lib/sounds";
+import { showFriendRequestNotification, showFriendAcceptedNotification } from "../lib/notifications";
 
 export const useConnectionStore = create((set, get) => ({
   friends: [],
@@ -111,6 +114,45 @@ export const useConnectionStore = create((set, get) => ({
       }));
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to cancel request");
+    }
+  },
+
+  subscribeToFriendEvents: () => {
+    const socket = useAuthStore.getState().socket;
+    if (!socket) return;
+
+    socket.on("newFriendRequest", (data) => {
+      set((state) => {
+        if (!state.friendRequests.find((req) => req._id === data._id)) {
+          playNotification();
+          showFriendRequestNotification(data.fullName, data.profilePic);
+          return { friendRequests: [...state.friendRequests, data] };
+        }
+        return state;
+      });
+    });
+
+    socket.on("friendRequestAccepted", (data) => {
+      set((state) => {
+        if (!state.friends.find((f) => f._id === data._id)) {
+          playNotification();
+          showFriendAcceptedNotification(data.fullName, data.profilePic);
+          toast.success(`${data.fullName} accepted your friend request!`);
+          return {
+            friends: [...state.friends, data],
+            sentRequests: state.sentRequests.filter((id) => id !== data._id && id._id !== data._id)
+          };
+        }
+        return state;
+      });
+    });
+  },
+
+  unsubscribeFromFriendEvents: () => {
+    const socket = useAuthStore.getState().socket;
+    if (socket) {
+      socket.off("newFriendRequest");
+      socket.off("friendRequestAccepted");
     }
   }
 }));

@@ -317,6 +317,7 @@ export const useAuthStore = create((set, get) => ({
         // Key exists on server but we can't decrypt without password.
         // User will need to re-login to recover their keys.
         console.warn("Private key not in localStorage. Please re-login to recover encryption keys.");
+        toast.error("Encryption keys missing on this device. Please log out and log back in to decrypt messages.", { duration: 6000 });
       } else if (!hasLocalKey && !user.publicKey) {
         // No key anywhere and no password — can't do anything.
         // Keys will be generated on next login.

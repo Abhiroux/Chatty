@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { useThemeStore } from "../store/useThemeStore";
-import { Send, User, Monitor, Sun, Moon } from "lucide-react";
+import { Send, User, Monitor, Sun, Moon, Bell, Volume2 } from "lucide-react";
+import { playNotification, getSoundSettings, updateSoundSettings } from "../lib/sounds";
+import { requestNotificationPermission, isNotificationAllowed } from "../lib/notifications";
 
 // Mock messages for the chat preview
 const PREVIEW_MESSAGES = [
@@ -21,6 +24,37 @@ const SettingsPage = () => {
   // Get theme state and setter from store
   const { theme, setTheme } = useThemeStore();
 
+  // Notification settings state
+  const [soundSettings, setSoundSettings] = useState(() => getSoundSettings());
+  const [browserPerm, setBrowserPerm] = useState(() => isNotificationAllowed() ? "granted" : "default");
+
+  const handleToggleSound = () => {
+    const newVal = !soundSettings.enabled;
+    setSoundSettings(updateSoundSettings({ enabled: newVal }));
+    if (newVal) playNotification();
+  };
+
+  const handleVolumeChange = (e) => {
+    const volume = parseFloat(e.target.value);
+    setSoundSettings(updateSoundSettings({ volume }));
+  };
+
+  const handleTestSound = () => {
+    playNotification();
+  };
+
+  const handleBrowserNotifs = async () => {
+    if (soundSettings.browserNotifications) {
+      setSoundSettings(updateSoundSettings({ browserNotifications: false }));
+    } else {
+      const perm = await requestNotificationPermission();
+      setBrowserPerm(perm);
+      if (perm === "granted") {
+        setSoundSettings(updateSoundSettings({ browserNotifications: true }));
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#111022] container mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-10 max-w-5xl">
       <div className="space-y-8">
@@ -30,6 +64,63 @@ const SettingsPage = () => {
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Choose a theme for your chat application.
           </p>
+        </div>
+
+        {/* Notifications Settings */}
+        <div className="bg-white dark:bg-[#16152a] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+            <Bell className="size-5" /> Notifications
+          </h3>
+          
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-slate-900 dark:text-slate-100">Notification Sounds</h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Play sounds for incoming messages and requests</p>
+              </div>
+              <label className="cursor-pointer relative inline-flex items-center">
+                <input type="checkbox" className="sr-only peer" checked={soundSettings.enabled} onChange={handleToggleSound} />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-[#6764f2]"></div>
+              </label>
+            </div>
+
+            <div className={`flex items-center justify-between transition-opacity ${!soundSettings.enabled ? "opacity-50 pointer-events-none" : ""}`}>
+              <div className="flex items-center gap-3">
+                <Volume2 className="size-5 text-slate-500 dark:text-slate-400" />
+                <input 
+                  type="range" 
+                  min="0" max="1" step="0.1" 
+                  value={soundSettings.volume} 
+                  onChange={handleVolumeChange} 
+                  onMouseUp={handleTestSound}
+                  onTouchEnd={handleTestSound}
+                  className="w-32 sm:w-48 accent-[#6764f2]" 
+                />
+              </div>
+              <button 
+                onClick={handleTestSound}
+                className="text-sm font-medium text-[#6764f2] hover:text-[#524fcc] transition-colors"
+                disabled={!soundSettings.enabled}
+              >
+                Test Sound
+              </button>
+            </div>
+
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-slate-900 dark:text-slate-100">Browser Notifications</h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {browserPerm === "denied" 
+                    ? "Notifications blocked by browser settings" 
+                    : "Show desktop popups when backgrounded"}
+                </p>
+              </div>
+              <label className={`cursor-pointer relative inline-flex items-center ${browserPerm === "denied" ? "opacity-50 pointer-events-none" : ""}`}>
+                <input type="checkbox" className="sr-only peer" checked={soundSettings.browserNotifications && browserPerm === "granted"} onChange={handleBrowserNotifs} disabled={browserPerm === "denied"} />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-[#6764f2]"></div>
+              </label>
+            </div>
+          </div>
         </div>
 
         {/* Theme Selector */}
