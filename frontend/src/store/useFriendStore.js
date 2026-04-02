@@ -31,6 +31,7 @@ export const useFriendStore = create((set) => ({
       const res = await axiosInstance.get("/user/requests");
       set({ friendRequests: res.data });
     } catch (error) {
+      console.error("Fetch requests failed", error);
       toast.error("Error fetching friend requests");
     } finally {
       set({ isLoadingRequests: false });

@@ -1,0 +1,64 @@
+
+> frontend@0.0.0 lint
+> eslint .
+
+
+D:\3rd Sem\Minor Project\Chat-App-main\frontend\src\components\AuthImagePattern.jsx
+  1:29  error  'title' is missing in props validation     react/prop-types
+  1:36  error  'subtitle' is missing in props validation  react/prop-types
+
+D:\3rd Sem\Minor Project\Chat-App-main\frontend\src\components\ChatContainer.jsx
+   1:8  error    'React' is defined but never used                                                                                no-unused-vars
+  33:6  warning  React Hook useEffect has a missing dependency: 'selectedUser'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\3rd Sem\Minor Project\Chat-App-main\frontend\src\components\ChatHeader.jsx
+    1:8    error  'React' is defined but never used                                no-unused-vars
+  110:100  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\3rd Sem\Minor Project\Chat-App-main\frontend\src\components\ImageCropperModal.jsx
+  1:8   error  'React' is defined but never used                no-unused-vars
+  7:30  error  'imageSrc' is missing in props validation        react/prop-types
+  7:40  error  'onCropComplete' is missing in props validation  react/prop-types
+  7:56  error  'onCancel' is missing in props validation        react/prop-types
+  7:66  error  'aspectRatio' is missing in props validation     react/prop-types
+
+D:\3rd Sem\Minor Project\Chat-App-main\frontend\src\components\Navbar.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+D:\3rd Sem\Minor Project\Chat-App-main\frontend\src\components\Sidebar.jsx
+  1:8   error  'React' is defined but never used  no-unused-vars
+  4:35  error  'Edit' is defined but never used   no-unused-vars
+
+D:\3rd Sem\Minor Project\Chat-App-main\frontend\src\pages\ConnectionsPage.jsx
+    1:8    error  'React' is defined but never used                                no-unused-vars
+    5:10   error  'formatMessageTime' is defined but never used                    no-unused-vars
+   43:33   error  'user' is missing in props validation                            react/prop-types
+   43:39   error  'onClose' is missing in props validation                         react/prop-types
+   67:47   error  'user.profilePic' is missing in props validation                 react/prop-types
+   68:47   error  'user.fullName' is missing in props validation                   react/prop-types
+   75:110  error  'user.fullName' is missing in props validation                   react/prop-types
+   86:51   error  'user.bio' is missing in props validation                        react/prop-types
+   86:112  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+   97:124  error  'user.email' is missing in props validation                      react/prop-types
+  107:124  error  'user.phone' is missing in props validation                      react/prop-types
+  122:39   error  'user.profilePic' is missing in props validation                 react/prop-types
+  237:79   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  275:85   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\3rd Sem\Minor Project\Chat-App-main\frontend\src\pages\LoginPage.jsx
+  216:18  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\3rd Sem\Minor Project\Chat-App-main\frontend\src\pages\SettingsPage.jsx
+  22:28  error  'activeTheme' is assigned a value but never used  no-unused-vars
+
+D:\3rd Sem\Minor Project\Chat-App-main\frontend\src\store\useChatStore.js
+  150:29  error  'selectedUser' is defined but never used  no-unused-vars
+
+D:\3rd Sem\Minor Project\Chat-App-main\frontend\src\store\useFriendStore.js
+  33:14  error  'error' is defined but never used  no-unused-vars
+
+D:\3rd Sem\Minor Project\Chat-App-main\frontend\src\utils\cropImage.js
+  96:32  error  'reject' is defined but never used  no-unused-vars
+
+✖ 33 problems (32 errors, 1 warning)
+

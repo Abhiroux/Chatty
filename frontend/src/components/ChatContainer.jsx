@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useChatStore } from "../store/useChatStore";
 import ChatHeader from "./ChatHeader";
@@ -6,7 +6,7 @@ import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
-import { useRef } from "react";
+
 import { X } from "lucide-react";
 
 const ChatContainer = () => {
@@ -31,6 +31,7 @@ const ChatContainer = () => {
       unsubscribeFromMessages(selectedUser);
     };
   }, [
+    selectedUser,
     selectedUser._id,
     getMessages,
     subscribeToMessages,

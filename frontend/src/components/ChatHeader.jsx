@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Info, Mail, Phone, User as UserIcon, Calendar, ImageIcon } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
@@ -107,7 +107,7 @@ const ChatHeader = () => {
                     <div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider">Bio</p>
                       <p className="text-sm font-medium text-slate-900 dark:text-slate-100 mt-0.5">
-                        {selectedUser.bio || <span className="text-slate-400 italic">This user hasn't added a bio yet.</span>}
+                        {selectedUser.bio || <span className="text-slate-400 italic">This user hasn&apos;t added a bio yet.</span>}
                       </p>
                     </div>
                   </div>
