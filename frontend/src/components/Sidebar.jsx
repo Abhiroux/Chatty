@@ -6,7 +6,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 
 const Sidebar = () => {
-  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } = useChatStore();
+  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading, unreadCounts } = useChatStore();
   const { authUser, onlineUsers } = useAuthStore();
   const [showOnlineUsers, setShowOnlineUsers] = useState(false);
 
@@ -123,6 +123,7 @@ const Sidebar = () => {
               filteredUsers.map((user) => {
                 const isSelected = selectedUser?._id === user._id;
                 const isOnline = onlineUsers.includes(user._id);
+                const unreadCount = unreadCounts?.[user._id] || 0;
 
                 return (
                   <div
@@ -143,13 +144,19 @@ const Sidebar = () => {
                       )}
                     </div>
 
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <div className="flex justify-between items-baseline mb-0.5">
+                    <div className="flex items-center justify-between flex-1 min-w-0">
+                      <div className="flex flex-col min-w-0">
                         <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{user.fullName}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
+                          {isOnline ? "Online" : "Offline"}
+                        </p>
                       </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
-                        {isOnline ? "Online" : "Offline"}
-                      </p>
+                      
+                      {unreadCount > 0 && (
+                        <div className="bg-[#111111] dark:bg-black text-white text-xs font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center shadow-sm ml-2 shrink-0">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </div>
+                      )}
                     </div>
 
                     {isSelected && (

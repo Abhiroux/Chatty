@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
 import { useAuthStore } from "./useAuthStore";
+import { playSend, playReceive, playNotification } from "../lib/sounds";
+import { showMessageNotification } from "../lib/notifications";
 import {
   generateSessionKey,
   encryptText,
@@ -43,6 +45,7 @@ export const useChatStore = create((set, get) => ({
   messages: [], // Array to store chat messages
   users: [], // Array to store list of users
   selectedUser: null, // Currently selected user for chatting
+  unreadCounts: {}, // Map of user._id to unread message count
   isUsersLoading: false, // Loading state for fetching users
   isMessagesLoading: false, // Loading state for fetching messages
 
@@ -51,7 +54,16 @@ export const useChatStore = create((set, get) => ({
     set({ isUsersLoading: true });
     try {
       const res = await axiosInstance.get("/message/users");
-      set({ users: res.data });
+      set((state) => {
+        const newUnread = { ...state.unreadCounts };
+        res.data.forEach((user) => {
+          // Sync with database offline unread counts
+          if (user.unreadCount !== undefined) {
+             newUnread[user._id] = Math.max(newUnread[user._id] || 0, user.unreadCount);
+          }
+        });
+        return { users: res.data, unreadCounts: newUnread };
+      });
     } catch (error) {
       toast.error(error.response?.data?.message);
     } finally {
@@ -122,6 +134,7 @@ export const useChatStore = create((set, get) => ({
       const decryptedSentMessage = await processDecryption(res.data, privateKey, authUser._id);
       
       set({ messages: [...messages, decryptedSentMessage] });
+      playSend();
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to send message");
     }
@@ -129,18 +142,53 @@ export const useChatStore = create((set, get) => ({
 
   // Subscribe to real-time messages via socket
   subscribeToMessages: () => {
-    const { selectedUser } = get();
-    if (!selectedUser) return;
-
     const socket = useAuthStore.getState().socket;
+    if (!socket) return;
+
+    // First remove any existing listener to avoid duplicates
+    socket.off("newMessage");
 
     // Listen for incoming messages
     socket.on("newMessage", async (newMessage) => {
-      if (newMessage.senderId !== selectedUser._id) return;
-      
+      const { selectedUser, users } = get();
       const { authUser } = useAuthStore.getState();
+      
       const privateKey = await getLocalPrivateKey(authUser._id);
       const decryptedMessage = await processDecryption(newMessage, privateKey, authUser._id);
+      
+      const isForSelectedUser = selectedUser && newMessage.senderId === selectedUser._id;
+      
+      if (!isForSelectedUser) {
+        // Find sender info from users list to show in notification
+        const sender = users.find(u => u._id === newMessage.senderId);
+        playNotification();
+        
+        // Increment unread count
+        set((state) => ({
+          unreadCounts: {
+            ...state.unreadCounts,
+            [newMessage.senderId]: (state.unreadCounts[newMessage.senderId] || 0) + 1
+          }
+        }));
+
+        if (sender) {
+            showMessageNotification(sender.fullName, decryptedMessage.text, sender.profilePic, () => {
+                get().setSelectedUser(sender);
+            });
+        }
+        return;
+      }
+      
+      // It is the selected user
+      playReceive();
+      
+      // If document is hidden, show browser notification even for selected user
+      if (document.hidden) {
+          const sender = users.find(u => u._id === newMessage.senderId) || selectedUser;
+          showMessageNotification(sender.fullName, decryptedMessage.text, sender.profilePic, () => {
+              window.focus();
+          });
+      }
       
       set({ messages: [...get().messages, decryptedMessage] });
     });
@@ -149,9 +197,17 @@ export const useChatStore = create((set, get) => ({
   // Unsubscribe from real-time messages
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
-    socket.off("newMessage");
+    if (socket) {
+      socket.off("newMessage");
+    }
   },
 
-  // Set the currently selected user
-  setSelectedUser: (selectedUser) => set({ selectedUser }),
+  // Set the currently selected user and clear their unread count
+  setSelectedUser: (selectedUser) => set((state) => ({ 
+    selectedUser,
+    unreadCounts: {
+      ...state.unreadCounts,
+      [selectedUser ? selectedUser._id : "none"]: 0
+    }
+  })),
 }));

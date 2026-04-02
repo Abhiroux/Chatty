@@ -7,7 +7,7 @@ import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
 
-import { X } from "lucide-react";
+import { X, Check } from "lucide-react";
 
 const ChatContainer = () => {
   const { authUser } = useAuthStore();
@@ -16,8 +16,6 @@ const ChatContainer = () => {
     getMessages,
     isMessagesLoading,
     selectedUser,
-    subscribeToMessages,
-    unsubscribeFromMessages,
   } = useChatStore();
 
   const messageEndRef = useRef(null);
@@ -25,17 +23,10 @@ const ChatContainer = () => {
 
   useEffect(() => {
     getMessages(selectedUser._id);
-    subscribeToMessages();
-
-    return () => {
-      unsubscribeFromMessages(selectedUser);
-    };
   }, [
     selectedUser,
     selectedUser._id,
     getMessages,
-    subscribeToMessages,
-    unsubscribeFromMessages,
   ]);
 
   useEffect(() => {
@@ -97,8 +88,9 @@ const ChatContainer = () => {
                   {message.text && <p className="text-sm sm:text-base leading-relaxed break-words">{message.text}</p>}
                 </div>
 
-                <span className={`text-[10px] sm:text-[11px] text-slate-400 ${isSent ? "pr-1" : "pl-1"}`}>
+                <span className={`text-[10px] sm:text-[11px] text-slate-400 ${isSent ? "pr-1" : "pl-1"} flex items-center justify-end gap-1 mt-1`}>
                   {formatMessageTime(message.createdAt)}
+                  {isSent && <Check className="size-3 text-[#6764f2]" />}
                 </span>
               </div>
             </div>
