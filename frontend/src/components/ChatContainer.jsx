@@ -69,7 +69,6 @@ const ChatContainer = () => {
             <div
               key={message._id}
               className={`flex gap-4 max-w-[80%] ${isSent ? "flex-row-reverse self-end ml-auto" : ""}`}
-              ref={messageEndRef}
             >
               <div className="shrink-0 flex flex-col justify-end">
                 <div
@@ -103,6 +102,7 @@ const ChatContainer = () => {
             </div>
           );
         })}
+        <div ref={messageEndRef} />
       </div>
 
       <MessageInput />

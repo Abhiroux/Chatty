@@ -110,20 +110,6 @@ const App = () => {
           }
         />
 
-        {/* Profile route - requires authentication */}
-        <Route
-          path="/profile"
-          element={
-            authUser ? (
-              <ProfilePage />
-            ) : needsOTP ? (
-              <Navigate to="/verify-otp" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-
         {/* Connections route - requires authentication */}
         <Route
           path="/connections"

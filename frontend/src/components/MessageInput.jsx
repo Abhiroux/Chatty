@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useChatStore } from "../store/useChatStore";
 import { useThemeStore } from "../store/useThemeStore";
-import { PlusCircle, Send, X, Smile, Mic } from "lucide-react";
+import { PlusCircle, Send, X, Smile } from "lucide-react";
 import toast from "react-hot-toast";
 import EmojiPicker from "emoji-picker-react";
 import ImageCropperModal from "./ImageCropperModal";
@@ -151,14 +151,6 @@ const MessageInput = () => {
             <Smile className="size-5" />
           </button>
           <button
-            type="button"
-            className="hidden sm:flex p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all shrink-0"
-            title="Voice message"
-          >
-            <Mic className="size-5" />
-          </button>
-
-          <button
             type="submit"
             className="p-2.5 sm:p-3 bg-[#6764f2] hover:bg-[#524fcc] text-white rounded-xl shadow-md shadow-[#6764f2]/30 transition-all shrink-0 sm:ml-1 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!text.trim() && !imagePreview}
@@ -167,9 +159,6 @@ const MessageInput = () => {
           </button>
         </div>
       </form>
-      <div className="text-center mt-2 hidden lg:block">
-        <p className="text-[11px] text-slate-400 dark:text-slate-500">Press Enter to send, Shift + Enter for new line</p>
-      </div>
 
       {/* Cropper Modal - rendered via portal to escape overflow-hidden */}
       {showCropper && tempImageForCrop && createPortal(

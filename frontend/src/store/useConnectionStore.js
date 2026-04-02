@@ -100,5 +100,17 @@ export const useConnectionStore = create((set, get) => ({
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to reject request");
     }
+  },
+
+  cancelRequest: async (userId) => {
+    try {
+      await axiosInstance.delete(`/user/cancel/${userId}`);
+      toast.success("Request cancelled");
+      set((state) => ({
+        sentRequests: state.sentRequests.filter((user) => user._id !== userId)
+      }));
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to cancel request");
+    }
   }
 }));
