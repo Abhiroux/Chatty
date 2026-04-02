@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 
 // Search users by name, email or phone
 export const searchUsers = async (req, res) => {
@@ -62,6 +63,17 @@ export const sendRequest = async (req, res) => {
     sender.sentFriendRequests.push(receiverId);
     await sender.save();
 
+    // Socket: Notify receiver
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newFriendRequest", { 
+        _id: sender._id,
+        fullName: sender.fullName,
+        profilePic: sender.profilePic,
+        email: sender.email
+      });
+    }
+
     res.status(200).json({ message: "Request sent successfully" });
   } catch (error) {
     console.error("Error in sendRequest", error.message);
@@ -94,6 +106,17 @@ export const acceptRequest = async (req, res) => {
     sender.sentFriendRequests = sender.sentFriendRequests.filter(id => id.toString() !== receiverId.toString());
     sender.friends.push(receiverId);
     await sender.save();
+
+    // Socket: Notify original sender that their request was accepted
+    const senderSocketId = getReceiverSocketId(senderId);
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("friendRequestAccepted", {
+        _id: receiver._id,
+        fullName: receiver.fullName,
+        profilePic: receiver.profilePic,
+        email: receiver.email
+      });
+    }
 
     res.status(200).json({ message: "Request accepted successfully", newFriend: sender });
   } catch (error) {

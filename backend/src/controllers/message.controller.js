@@ -9,7 +9,22 @@ export const getUsersForSidebar = async (req, res) => {
     const loggedInUserId = req.user._id;
     const user = await User.findById(loggedInUserId).populate("friends", "-password");
     
-    res.status(200).json(user.friends || []);
+    // Fetch offline unread counts for each friend
+    const friendsWithUnread = await Promise.all(
+      (user.friends || []).map(async (friend) => {
+        const unreadCount = await Message.countDocuments({
+          senderId: friend._id,
+          receiverId: loggedInUserId,
+          isRead: false,
+        });
+        return {
+          ...friend.toObject(),
+          unreadCount,
+        };
+      })
+    );
+    
+    res.status(200).json(friendsWithUnread);
   } catch (error) {
     console.error("Error in getUsersForSidebar", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -20,6 +35,12 @@ export const getMessages = async (req, res) => {
   try {
     const { id: userToChatId } = req.params;
     const myId = req.user._id;
+
+    // Mark unread incoming messages as read
+    await Message.updateMany(
+      { senderId: userToChatId, receiverId: myId, isRead: false },
+      { $set: { isRead: true } }
+    );
 
     const messages = await Message.find({
       $or: [
