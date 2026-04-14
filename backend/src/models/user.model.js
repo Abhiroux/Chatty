@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema(
     otpHash: String,
     oldEmailOtpHash: String,
     otpExpireAt: Date,
+    resetOtpHash: String,
+    resetOtpExpireAt: Date,
+    resetToken: String,
+    resetTokenExpireAt: Date,
     friends: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -26,6 +26,14 @@ export const useAuthStore = create((set, get) => ({
   socket: null, // Socket.io connection instance
   pendingPassword: null, // Temporarily holds password during signup flow for key wrapping
 
+  // Forgot password state
+  forgotPasswordUserId: null,
+  forgotPasswordResetToken: null,
+  forgotPasswordStep: null, // 'request' | 'verify' | 'reset' | null
+  isSendingResetOTP: false,
+  isVerifyingResetOTP: false,
+  isResettingPassword: false,
+
   // Check if user is authenticated (page refresh — no password available)
   checkAuth: async () => {
     try {
@@ -211,6 +219,108 @@ export const useAuthStore = create((set, get) => ({
       toast.error(error.response?.data?.message || "Failed to change password");
       return false;
     }
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // FORGOT PASSWORD FLOW
+  // ═══════════════════════════════════════════════════════════
+
+  // Step 1: Request OTP for password reset
+  forgotPassword: async (data) => {
+    set({ isSendingResetOTP: true });
+    try {
+      const res = await axiosInstance.post("/auth/forgot-password", data);
+      set({
+        forgotPasswordUserId: res.data.userId,
+        forgotPasswordStep: "verify",
+      });
+      toast.success("OTP sent to your registered email/phone");
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to send reset OTP");
+      return false;
+    } finally {
+      set({ isSendingResetOTP: false });
+    }
+  },
+
+  // Step 2: Verify the forgot-password OTP
+  verifyForgotPasswordOTP: async (otp) => {
+    const { forgotPasswordUserId } = get();
+    if (!forgotPasswordUserId) return false;
+
+    set({ isVerifyingResetOTP: true });
+    try {
+      const res = await axiosInstance.post("/auth/verify-forgot-password-otp", {
+        userId: forgotPasswordUserId,
+        otp,
+      });
+      set({
+        forgotPasswordResetToken: res.data.resetToken,
+        forgotPasswordStep: "reset",
+      });
+      toast.success("OTP verified! Set your new password");
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Invalid or expired OTP");
+      return false;
+    } finally {
+      set({ isVerifyingResetOTP: false });
+    }
+  },
+
+  // Step 3: Reset the password with the reset token
+  resetPassword: async (newPassword) => {
+    const { forgotPasswordUserId, forgotPasswordResetToken } = get();
+    if (!forgotPasswordUserId || !forgotPasswordResetToken) return false;
+
+    set({ isResettingPassword: true });
+    try {
+      await axiosInstance.post("/auth/reset-password", {
+        userId: forgotPasswordUserId,
+        resetToken: forgotPasswordResetToken,
+        newPassword,
+      });
+      toast.success("Password reset successfully! Please login.");
+      set({
+        forgotPasswordUserId: null,
+        forgotPasswordResetToken: null,
+        forgotPasswordStep: null,
+      });
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to reset password");
+      return false;
+    } finally {
+      set({ isResettingPassword: false });
+    }
+  },
+
+  // Resend OTP for forgot password
+  resendForgotPasswordOTP: async () => {
+    const { forgotPasswordUserId } = get();
+    if (!forgotPasswordUserId) return;
+
+    try {
+      await axiosInstance.post("/auth/resend-forgot-password-otp", {
+        userId: forgotPasswordUserId,
+      });
+      toast.success("OTP resent successfully");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to resend OTP");
+    }
+  },
+
+  // Clear forgot password state (e.g., when navigating away)
+  clearForgotPassword: () => {
+    set({
+      forgotPasswordUserId: null,
+      forgotPasswordResetToken: null,
+      forgotPasswordStep: null,
+      isSendingResetOTP: false,
+      isVerifyingResetOTP: false,
+      isResettingPassword: false,
+    });
   },
 
   // Establish socket connection and listen for online users

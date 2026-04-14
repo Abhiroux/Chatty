@@ -6,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import SignUpPage from "./pages/SignUpPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import { useAuthStore } from "./store/useAuthStore";
 import VerifyOTPPage from "./pages/VerifyOTPPage";
 import ConnectionsPage from "./pages/ConnectionsPage";
@@ -101,8 +102,8 @@ const App = () => {
 
   return (
     <div data-theme={activeTheme}>
-      {/* Conditionally render navbar (hidden during OTP verification) */}
-      {!needsOTP && <Navbar />}
+      {/* Conditionally render navbar — only when authenticated and not verifying OTP */}
+      {authUser && !needsOTP && <Navbar />}
 
       {/* Application routes */}
       <Routes>
@@ -150,6 +151,20 @@ const App = () => {
               <Navigate to="/verify-otp" />
             ) : (
               <Navigate to="/" />
+            )
+          }
+        />
+
+        {/* Forgot Password route - only for unauthenticated users */}
+        <Route
+          path="/forgot-password"
+          element={
+            !authUser && !needsOTP ? (
+              <ForgotPasswordPage />
+            ) : authUser ? (
+              <Navigate to="/" />
+            ) : (
+              <Navigate to="/verify-otp" />
             )
           }
         />
