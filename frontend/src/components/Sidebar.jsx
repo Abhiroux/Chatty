@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
-import { Search, UserPlus, Check, X } from "lucide-react";
+import { Search, UserPlus, Check, X, ArrowLeft, Users, MessageCircle } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useConnectionStore } from "../store/useConnectionStore";
 
@@ -44,57 +44,88 @@ const Sidebar = () => {
     }
   };
 
+  // Go back to contacts view and clear search
+  const goBackToContacts = () => {
+    setView("contacts");
+    setSearchQuery("");
+    searchUsers("");
+  };
+
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
     <aside className="w-full h-full flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-[#16152a] backdrop-blur-xl shrink-0 relative z-20 transition-all duration-200">
 
       {/* Top Bar: User Profile & Actions */}
-      <div className="flex items-center justify-between p-4 pb-2 border-b border-transparent">
+      <div className="flex items-center justify-between p-4 pb-2">
         <div className="flex items-center gap-3">
-          <div className="relative group cursor-pointer">
-            <div
-              className="bg-center bg-no-repeat bg-cover rounded-full size-10 ring-2 ring-[#6764f2]/20"
-              style={{ backgroundImage: `url(${authUser?.profilePic || "./avatar.png"})` }}
-            ></div>
-            <div className="absolute bottom-0 right-0 size-3 bg-green-500 border-2 border-white dark:border-[#16152a] rounded-full"></div>
-          </div>
+          {/* Show back arrow when in requests or search view */}
+          {view !== "contacts" ? (
+            <button
+              onClick={goBackToContacts}
+              className="flex items-center justify-center size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
+              title="Back to chats"
+            >
+              <ArrowLeft className="size-5" />
+            </button>
+          ) : (
+            <div className="relative group cursor-pointer">
+              <div
+                className="bg-center bg-no-repeat bg-cover rounded-full size-10 ring-2 ring-[#6764f2]/20"
+                style={{ backgroundImage: `url(${authUser?.profilePic || "./avatar.png"})` }}
+              ></div>
+              <div className="absolute bottom-0 right-0 size-3 bg-green-500 border-2 border-white dark:border-[#16152a] rounded-full"></div>
+            </div>
+          )}
           <div className="flex flex-col">
-            <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">Chats</h2>
+            <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              {view === "requests" ? "Requests" : view === "search" ? "Search" : "Chats"}
+            </h2>
+            {view === "contacts" && (
+              <p className="text-xs text-slate-400 dark:text-slate-500 -mt-0.5">
+                {onlineFriendsCount} online
+              </p>
+            )}
           </div>
         </div>
 
         <button
-          className="relative flex items-center justify-center size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
+          className={`relative flex items-center justify-center size-10 rounded-full transition-colors ${
+            view === "requests"
+              ? "bg-[#6764f2]/10 dark:bg-[#6764f2]/20 text-[#6764f2]"
+              : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400"
+          }`}
           onClick={() => setView(view === "requests" ? "contacts" : "requests")}
           title="Friend Requests"
         >
           <UserPlus className="size-5" />
           {friendRequests.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-[#6764f2] text-white text-xs font-bold rounded-full size-4 flex items-center justify-center shadow-sm shadow-[#6764f2]/40">
+            <span className="absolute -top-1 -right-1 bg-[#6764f2] text-white text-[10px] font-bold rounded-full size-[18px] flex items-center justify-center shadow-sm shadow-[#6764f2]/40 ring-2 ring-white dark:ring-[#16152a]">
               {friendRequests.length}
             </span>
           )}
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="px-4 py-3">
-        <div className="relative group">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 group-focus-within:text-[#6764f2] transition-colors">
-            <Search className="size-4" />
+      {/* Search Bar — hidden in requests view */}
+      {view !== "requests" && (
+        <div className="px-4 py-3">
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 group-focus-within:text-[#6764f2] transition-colors">
+              <Search className="size-4" />
+            </div>
+            <input
+              type="text"
+              className="block w-full rounded-xl border-none bg-slate-100 dark:bg-[#1e1d33] py-2.5 pl-9 pr-4 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-[#6764f2]/50 transition-all shadow-sm outline-none"
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={handleSearch}
+            />
           </div>
-          <input
-            type="text"
-            className="block w-full rounded-xl border-none bg-slate-100 dark:bg-[#1e1d33] py-2.5 pl-9 pr-4 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-[#6764f2]/50 transition-all shadow-sm outline-none"
-            placeholder="Search users..."
-            value={searchQuery}
-            onChange={handleSearch}
-          />
         </div>
-      </div>
+      )}
 
-      {/* Filters */}
+      {/* Filters — only in contacts view */}
       {view === "contacts" && (
         <div className="px-4 pb-2 flex items-center gap-2">
           <label className="cursor-pointer flex items-center gap-2">
@@ -113,12 +144,20 @@ const Sidebar = () => {
         </div>
       )}
 
-      {/* Chat List */}
+      {/* Chat List / Search Results / Friend Requests */}
       <div className="flex-1 overflow-y-auto px-2 space-y-1 custom-scrollbar">
+
+        {/* ═══ CONTACTS VIEW ═══ */}
         {view === "contacts" && (
           <>
             {filteredUsers.length === 0 ? (
-              <div className="text-center text-slate-500 py-4 text-sm">No contacts found</div>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#1e1d33] flex items-center justify-center mb-3">
+                  <MessageCircle className="w-7 h-7 text-slate-300 dark:text-slate-600" />
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">No contacts yet</p>
+                <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">Search for users to add friends</p>
+              </div>
             ) : (
               filteredUsers.map((user) => {
                 const isSelected = selectedUser?._id === user._id;
@@ -129,7 +168,7 @@ const Sidebar = () => {
                   <div
                     key={user._id}
                     onClick={() => setSelectedUser(user)}
-                    className={`group flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors relative ${isSelected
+                    className={`group flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-150 relative ${isSelected
                       ? "bg-[#6764f2]/10 dark:bg-white/5"
                       : "hover:bg-slate-100 dark:hover:bg-white/5"
                       }`}
@@ -147,13 +186,13 @@ const Sidebar = () => {
                     <div className="flex items-center justify-between flex-1 min-w-0">
                       <div className="flex flex-col min-w-0">
                         <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{user.fullName}</p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
+                        <p className={`text-sm truncate ${isOnline ? "text-green-500" : "text-slate-400 dark:text-slate-500"}`}>
                           {isOnline ? "Online" : "Offline"}
                         </p>
                       </div>
                       
                       {unreadCount > 0 && (
-                        <div className="bg-[#111111] dark:bg-black text-white text-xs font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center shadow-sm ml-2 shrink-0">
+                        <div className="bg-[#6764f2] text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center shadow-sm shadow-[#6764f2]/30 ml-2 shrink-0">
                           {unreadCount > 99 ? "99+" : unreadCount}
                         </div>
                       )}
@@ -169,12 +208,22 @@ const Sidebar = () => {
           </>
         )}
 
+        {/* ═══ SEARCH VIEW ═══ */}
         {view === "search" && (
           <div className="px-1 space-y-1">
             {isSearching ? (
-              <div className="text-center text-slate-500 py-4 text-sm">Searching...</div>
+              <div className="flex flex-col items-center py-8">
+                <div className="w-6 h-6 border-2 border-[#6764f2] border-t-transparent rounded-full animate-spin mb-2"></div>
+                <p className="text-slate-500 text-sm">Searching...</p>
+              </div>
             ) : searchResults.length === 0 ? (
-              <div className="text-center text-slate-500 py-4 text-sm">No users found</div>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#1e1d33] flex items-center justify-center mb-3">
+                  <Search className="w-7 h-7 text-slate-300 dark:text-slate-600" />
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">No users found</p>
+                <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">Try a different search term</p>
+              </div>
             ) : (
               searchResults.map((user) => {
                 const isFriend = users.find(u => u._id === user._id);
@@ -196,12 +245,12 @@ const Sidebar = () => {
 
                     <div>
                       {isFriend ? (
-                        <span className="text-[10px] font-bold tracking-wide uppercase text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-white/5 px-2 py-1 rounded-full">Friend</span>
+                        <span className="text-[10px] font-bold tracking-wide uppercase text-green-500 bg-green-500/10 px-2.5 py-1 rounded-full">Friend</span>
                       ) : isSent ? (
-                        <span className="text-[10px] font-bold tracking-wide uppercase text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-white/5 px-2 py-1 rounded-full">Sent</span>
+                        <span className="text-[10px] font-bold tracking-wide uppercase text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-white/5 px-2.5 py-1 rounded-full">Sent</span>
                       ) : (
                         <button
-                          className="bg-[#6764f2] hover:bg-[#524fcc] text-white px-3 py-1 text-xs font-semibold rounded-lg shadow-sm shadow-[#6764f2]/30 transition-colors"
+                          className="bg-[#6764f2] hover:bg-[#524fcc] text-white px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm shadow-[#6764f2]/30 transition-colors"
                           onClick={() => sendFriendRequest(user._id)}
                         >
                           Add
@@ -215,41 +264,50 @@ const Sidebar = () => {
           </div>
         )}
 
+        {/* ═══ FRIEND REQUESTS VIEW ═══ */}
         {view === "requests" && (
-          <div className="px-1 space-y-2">
-            <h3 className="px-2 pt-2 text-xs font-bold tracking-wider uppercase text-slate-500 mb-1">Friend Requests</h3>
+          <div className="px-1 space-y-2 pt-2">
             {friendRequests.length === 0 ? (
-              <div className="text-center text-slate-500 py-4 text-sm">No new requests</div>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#1e1d33] flex items-center justify-center mb-3">
+                  <Users className="w-7 h-7 text-slate-300 dark:text-slate-600" />
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">No pending requests</p>
+                <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">When someone sends you a request, it'll show up here</p>
+              </div>
             ) : (
               friendRequests.map((req) => (
-                <div key={req._id} className="w-full p-3 flex flex-col gap-3 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white/50 dark:bg-[#1e1d33]/50">
+                <div key={req._id} className="w-full p-3 flex flex-col gap-3 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#1e1d33]/50">
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0">
                       <div
-                        className="bg-center bg-no-repeat bg-cover rounded-full size-10"
+                        className="bg-center bg-no-repeat bg-cover rounded-full size-11"
                         style={{ backgroundImage: `url(${req.profilePic || "./avatar.png"})` }}
                       ></div>
                     </div>
                     <div className="text-left min-w-0 flex-1">
-                      <div className="font-medium text-slate-900 dark:text-slate-100 truncate text-sm">{req.fullName}</div>
+                      <div className="font-semibold text-slate-900 dark:text-slate-100 truncate text-sm">{req.fullName}</div>
+                      <div className="text-xs text-slate-400 dark:text-slate-500">Wants to connect</div>
                     </div>
                   </div>
 
-                  <div className="flex gap-2 w-full mt-1">
+                  <div className="flex gap-2 w-full">
                     <button
-                      className="flex-1 bg-[#6764f2] hover:bg-[#524fcc] text-white py-1.5 text-xs font-semibold rounded-lg shadow-sm shadow-[#6764f2]/30 transition-colors flex items-center justify-center gap-1"
+                      className="flex-1 bg-[#6764f2] hover:bg-[#524fcc] text-white py-2 text-xs font-semibold rounded-lg shadow-sm shadow-[#6764f2]/30 transition-colors flex items-center justify-center gap-1.5"
                       onClick={() => acceptFriendRequest(req._id, () => {
-                        getUsers();
-                        setView("contacts");
+                        // If this was the last request, go back to contacts
+                        if (friendRequests.length <= 1) {
+                          setView("contacts");
+                        }
                       })}
                     >
-                      <Check className="size-3" /> Accept
+                      <Check className="size-3.5" /> Accept
                     </button>
                     <button
-                      className="flex-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1"
+                      className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
                       onClick={() => rejectFriendRequest(req._id)}
                     >
-                      <X className="size-3" /> Reject
+                      <X className="size-3.5" /> Decline
                     </button>
                   </div>
                 </div>

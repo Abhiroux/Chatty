@@ -352,6 +352,184 @@ export const verifyContactUpdate = async (req, res) => {
   }
 };
 
+// Forgot password — send OTP to user's registered email/phone
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email, phone } = req.body;
+
+    if (!email && !phone) {
+      return res.status(400).json({ message: "Email or phone is required" });
+    }
+
+    // Find the user by email or phone
+    const query = [];
+    if (email) query.push({ email });
+    if (phone) query.push({ phone });
+    const user = await User.findOne({ $or: query });
+
+    if (!user) {
+      return res.status(404).json({ message: "No account found with this information" });
+    }
+
+    // Generate OTP and store on user
+    const otp = generateOTP();
+    user.resetOtpHash = hashOTP(otp);
+    user.resetOtpExpireAt = Date.now() + 10 * 60 * 1000; // 10 min
+    user.resetToken = undefined; // clear any previous reset token
+    await user.save();
+
+    // Send OTP via email or SMS
+    if (email && user.email) {
+      sendOTPEmail(user.email, otp).catch((err) =>
+        console.error("Failed to send email:", err.message)
+      );
+    }
+    if (phone && user.phone) {
+      sendOTPSMS(user.phone, otp).catch((err) =>
+        console.error("Failed to send SMS:", err.message)
+      );
+    }
+
+    res.status(200).json({
+      message: "OTP sent successfully",
+      userId: user._id,
+    });
+  } catch (error) {
+    console.log("Error in forgotPassword controller:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Verify forgot-password OTP — returns a one-time reset token
+export const verifyForgotPasswordOTP = async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+
+    if (!userId || !otp) {
+      return res.status(400).json({ message: "User ID and OTP are required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isOTPValid =
+      user.resetOtpHash === hashOTP(otp) && user.resetOtpExpireAt > Date.now();
+
+    if (!isOTPValid) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // Generate a random reset token (one-time use, 15 min validity)
+    const crypto = await import("crypto");
+    const resetToken = crypto.default.randomBytes(32).toString("hex");
+    user.resetToken = hashOTP(resetToken); // store hashed
+    user.resetTokenExpireAt = Date.now() + 15 * 60 * 1000;
+    user.resetOtpHash = undefined;
+    user.resetOtpExpireAt = undefined;
+    await user.save();
+
+    res.status(200).json({
+      message: "OTP verified successfully",
+      resetToken,
+      userId: user._id,
+    });
+  } catch (error) {
+    console.error("Error in verifyForgotPasswordOTP:", error.message);
+    res.status(500).json({ message: "OTP verification failed" });
+  }
+};
+
+// Reset password using the reset token
+export const resetPassword = async (req, res) => {
+  try {
+    const { userId, resetToken, newPassword } = req.body;
+
+    if (!userId || !resetToken || !newPassword) {
+      return res
+        .status(400)
+        .json({ message: "User ID, reset token, and new password are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters long" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify reset token
+    const isTokenValid =
+      user.resetToken === hashOTP(resetToken) &&
+      user.resetTokenExpireAt > Date.now();
+
+    if (!isTokenValid) {
+      return res.status(400).json({ message: "Invalid or expired reset token" });
+    }
+
+    // Hash and set the new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    // Clear reset fields
+    user.resetToken = undefined;
+    user.resetTokenExpireAt = undefined;
+
+    // Clear E2EE keys since the password changed and we cannot re-wrap without the old key
+    user.encryptedPrivateKey = "";
+    user.keySalt = "";
+
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    console.log("Error in resetPassword controller:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Resend OTP for forgot password flow
+export const resendForgotPasswordOTP = async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const otp = generateOTP();
+    user.resetOtpHash = hashOTP(otp);
+    user.resetOtpExpireAt = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    if (user.email) {
+      sendOTPEmail(user.email, otp).catch((err) =>
+        console.error("Failed to send email:", err.message)
+      );
+    }
+    if (user.phone) {
+      sendOTPSMS(user.phone, otp).catch((err) =>
+        console.error("Failed to send SMS:", err.message)
+      );
+    }
+
+    res.status(200).json({ message: "OTP resent successfully" });
+  } catch (error) {
+    console.log("Error in resendForgotPasswordOTP:", error.message);
+    res.status(500).json({ message: "Failed to resend OTP" });
+  }
+};
+
 // Check if user is authenticated
 export const checkAuth = (req, res) => {
   try {

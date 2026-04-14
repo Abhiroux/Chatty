@@ -80,7 +80,7 @@ export const useConnectionStore = create((set, get) => ({
     }
   },
 
-  acceptRequest: async (userId) => {
+  acceptRequest: async (userId, onSuccess) => {
     try {
       const res = await axiosInstance.post(`/user/accept/${userId}`);
       toast.success("Request accepted!");
@@ -88,6 +88,13 @@ export const useConnectionStore = create((set, get) => ({
         friendRequests: state.friendRequests.filter((user) => user._id !== userId),
         friends: [...state.friends, res.data.newFriend]
       }));
+
+      // Refresh the sidebar users list so the new friend appears immediately
+      const { useChatStore } = await import("./useChatStore");
+      useChatStore.getState().getUsers();
+
+      // Call the optional callback (e.g. to switch view back to contacts)
+      if (onSuccess) onSuccess();
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to accept request");
     }
@@ -138,6 +145,12 @@ export const useConnectionStore = create((set, get) => ({
           playNotification();
           showFriendAcceptedNotification(data.fullName, data.profilePic);
           toast.success(`${data.fullName} accepted your friend request!`);
+
+          // Refresh the sidebar users list
+          import("./useChatStore").then(({ useChatStore }) => {
+            useChatStore.getState().getUsers();
+          });
+
           return {
             friends: [...state.friends, data],
             sentRequests: state.sentRequests.filter((id) => id !== data._id && id._id !== data._id)
