@@ -8,6 +8,8 @@ import {
   getLocalPrivateKey,
   wrapPrivateKey,
   unwrapPrivateKey,
+  doKeysMatch,
+  getPublicKeyFromPrivateJwk,
 } from "../lib/crypto";
 
 const BASE_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.MODE === "production" ? "/" : "http://localhost:5001");
@@ -352,6 +354,10 @@ export const useAuthStore = create((set, get) => ({
    * 1. Check localStorage for existing private key
    * 2. If not found, try to unwrap from server using password
    * 3. If server has no key either, generate a brand new pair
+   *
+   * IMPORTANT: If the server has existing keys but unwrapping fails,
+   * we MUST NOT generate new keys — that would overwrite the server's
+   * public key and permanently break decryption of old messages.
    */
   initKeysWithPassword: async (user, password) => {
     try {
@@ -361,18 +367,29 @@ export const useAuthStore = create((set, get) => ({
       let hasLocalKey = await getLocalPrivateKey(user._id);
 
       if (hasLocalKey) {
-        // We already have the private key locally. But if the server
-        // doesn't have the wrapped backup yet, upload it now.
-        if (!user.encryptedPrivateKey) {
-          console.log("Backing up private key to server...");
-          const privateKeyJwk = JSON.parse(localStorage.getItem(`privateKey_${user._id}`));
+        const privateKeyJwk = JSON.parse(localStorage.getItem(`privateKey_${user._id}`));
+
+        // Check if the local key matches the server's public key.
+        // If they don't match, the server's key was likely corrupted by a
+        // failed key regeneration on another device. The local key is the
+        // authoritative source — re-upload the correct public key.
+        const needsReSync = !user.encryptedPrivateKey ||
+          (user.publicKey && !doKeysMatch(privateKeyJwk, user.publicKey));
+
+        if (needsReSync) {
+          console.log(needsReSync && user.publicKey
+            ? "⚠️ Local key doesn't match server — re-syncing correct keys..."
+            : "Backing up private key to server..."
+          );
+          const publicKeyJwk = getPublicKeyFromPrivateJwk(privateKeyJwk);
           const { encryptedPrivateKey, keySalt } = await wrapPrivateKey(privateKeyJwk, password);
           const res = await axiosInstance.put("/auth/update-profile", {
             encryptedPrivateKey,
             keySalt,
-            publicKey: user.publicKey || undefined,
+            publicKey: JSON.stringify(publicKeyJwk),
           });
           set({ authUser: res.data });
+          console.log("Keys re-synced to server successfully ✅");
         }
         return; // Done — local key is ready
       }
@@ -380,22 +397,44 @@ export const useAuthStore = create((set, get) => ({
       // Step 2: Try to recover from server
       if (user.encryptedPrivateKey && user.keySalt) {
         console.log("Recovering private key from server...");
-        const privateKeyJwk = await unwrapPrivateKey(
-          user.encryptedPrivateKey,
-          user.keySalt,
-          password
-        );
+
+        // Try up to 2 attempts in case of transient crypto failures
+        let privateKeyJwk = null;
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          privateKeyJwk = await unwrapPrivateKey(
+            user.encryptedPrivateKey,
+            user.keySalt,
+            password
+          );
+          if (privateKeyJwk) break;
+          if (attempt < 2) {
+            console.log(`Key recovery attempt ${attempt} failed, retrying...`);
+            await new Promise(r => setTimeout(r, 500));
+          }
+        }
 
         if (privateKeyJwk) {
           storePrivateKey(user._id, privateKeyJwk);
           console.log("Private key recovered successfully ✅");
           return; // Done — key recovered from server
         }
-        console.warn("Failed to unwrap key — password may have changed. Generating new keys.");
+
+        // CRITICAL: Do NOT generate new keys here!
+        // The server already has a public key that was used to encrypt
+        // existing messages. Generating a new key pair would overwrite
+        // the public key and make ALL old messages permanently unreadable.
+        console.error("Failed to recover private key from server. Old messages cannot be decrypted on this device.");
+        toast.error(
+          "Could not recover encryption keys. Your old messages cannot be decrypted on this device. Try logging in again.",
+          { duration: 8000 }
+        );
+        return; // Do NOT fall through to key generation
       }
 
-      // Step 3: No key anywhere — generate fresh pair
-      console.log("Generating new E2EE KeyPair...");
+      // Step 3: No key anywhere (fresh account) — generate new pair
+      // This ONLY runs when the server has NO existing keys, meaning
+      // this is a brand new user who hasn't generated keys yet.
+      console.log("Generating new E2EE KeyPair (fresh account)...");
       const { publicKeyJwk, privateKeyJwk } = await generateKeyPair();
       storePrivateKey(user._id, privateKeyJwk);
 
@@ -417,13 +456,21 @@ export const useAuthStore = create((set, get) => ({
   /**
    * Initialize keys when PASSWORD IS NOT AVAILABLE (checkAuth / page refresh).
    * Only tries localStorage — if missing, does NOT generate new keys.
+   * Also detects key mismatch and warns the user.
    */
   initKeysFromLocal: async (user) => {
     try {
       if (!user) return;
       const hasLocalKey = await getLocalPrivateKey(user._id);
 
-      if (!hasLocalKey && user.encryptedPrivateKey) {
+      if (hasLocalKey && user.publicKey) {
+        // Verify local key matches server's public key
+        const privateKeyJwk = JSON.parse(localStorage.getItem(`privateKey_${user._id}`));
+        if (!doKeysMatch(privateKeyJwk, user.publicKey)) {
+          console.warn("⚠️ Local private key doesn't match server's public key. Please log out and log back in to re-sync.");
+          toast.error("Encryption key mismatch detected. Please log out and log back in to fix this.", { duration: 6000 });
+        }
+      } else if (!hasLocalKey && user.encryptedPrivateKey) {
         // Key exists on server but we can't decrypt without password.
         // User will need to re-login to recover their keys.
         console.warn("Private key not in localStorage. Please re-login to recover encryption keys.");

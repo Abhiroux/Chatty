@@ -55,6 +55,42 @@ export async function generateKeyPair() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// KEY UTILITIES
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Derive the public key JWK from a private key JWK.
+ * RSA private key JWK contains all public key components (kty, n, e).
+ * This allows verifying whether a local private key matches the server's public key.
+ */
+export function getPublicKeyFromPrivateJwk(privateKeyJwk) {
+  return {
+    kty: privateKeyJwk.kty,
+    n: privateKeyJwk.n,
+    e: privateKeyJwk.e,
+    alg: privateKeyJwk.alg || "RSA-OAEP-256",
+    ext: true,
+    key_ops: ["encrypt"],
+  };
+}
+
+/**
+ * Check if a local private key JWK matches a server-stored public key.
+ * Compares the modulus (n) and exponent (e) which uniquely identify an RSA key pair.
+ */
+export function doKeysMatch(privateKeyJwk, serverPublicKeyStr) {
+  try {
+    let serverPub = serverPublicKeyStr;
+    if (typeof serverPublicKeyStr === "string") {
+      serverPub = JSON.parse(serverPublicKeyStr);
+    }
+    return privateKeyJwk.n === serverPub.n && privateKeyJwk.e === serverPub.e;
+  } catch {
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // LOCAL PRIVATE KEY STORAGE (localStorage)
 // ═══════════════════════════════════════════════════════════════
 
