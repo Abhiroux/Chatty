@@ -39,11 +39,17 @@ export async function generateKeyPair() {
       hash: "SHA-256",
     },
     true,
-    ["encrypt", "decrypt"]
+    ["encrypt", "decrypt"],
   );
 
-  const publicKeyJwk = await window.crypto.subtle.exportKey("jwk", keyPair.publicKey);
-  const privateKeyJwk = await window.crypto.subtle.exportKey("jwk", keyPair.privateKey);
+  const publicKeyJwk = await window.crypto.subtle.exportKey(
+    "jwk",
+    keyPair.publicKey,
+  );
+  const privateKeyJwk = await window.crypto.subtle.exportKey(
+    "jwk",
+    keyPair.privateKey,
+  );
 
   return { publicKeyJwk, privateKeyJwk };
 }
@@ -67,7 +73,7 @@ export async function getLocalPrivateKey(userId) {
     jwk,
     { name: "RSA-OAEP", hash: "SHA-256" },
     true,
-    ["decrypt"]
+    ["decrypt"],
   );
 }
 
@@ -86,7 +92,7 @@ export async function importPublicKey(publicKeyJwkOrStr) {
     jwk,
     { name: "RSA-OAEP", hash: "SHA-256" },
     true,
-    ["encrypt"]
+    ["encrypt"],
   );
 }
 
@@ -99,7 +105,7 @@ export async function generateSessionKey() {
   return window.crypto.subtle.generateKey(
     { name: "AES-GCM", length: 256 },
     true,
-    ["encrypt", "decrypt"]
+    ["encrypt", "decrypt"],
   );
 }
 
@@ -112,7 +118,7 @@ export async function encryptText(text, sessionKey) {
   const cipherText = await window.crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
     sessionKey,
-    encoded
+    encoded,
   );
 
   return {
@@ -130,7 +136,7 @@ export async function decryptText(cipherTextBase64, ivBase64, sessionKey) {
     const decrypted = await window.crypto.subtle.decrypt(
       { name: "AES-GCM", iv },
       sessionKey,
-      cipherText
+      cipherText,
     );
     const dec = new TextDecoder();
     return dec.decode(decrypted);
@@ -146,7 +152,7 @@ export async function encryptSessionKey(sessionKey, publicKey) {
   const encryptedKey = await window.crypto.subtle.encrypt(
     { name: "RSA-OAEP" },
     publicKey,
-    rawSessionKey
+    rawSessionKey,
   );
   return arrayBufferToBase64(encryptedKey);
 }
@@ -158,14 +164,14 @@ export async function decryptSessionKey(encryptedSessionKeyBase64, privateKey) {
     const rawSessionKey = await window.crypto.subtle.decrypt(
       { name: "RSA-OAEP" },
       privateKey,
-      encryptedKeyBuf
+      encryptedKeyBuf,
     );
     return window.crypto.subtle.importKey(
       "raw",
       rawSessionKey,
       { name: "AES-GCM" },
       true,
-      ["encrypt", "decrypt"]
+      ["encrypt", "decrypt"],
     );
   } catch (error) {
     console.error("Failed to decrypt session key:", error);
@@ -193,7 +199,7 @@ export async function deriveWrappingKey(password, salt) {
     enc.encode(password),
     "PBKDF2",
     false,
-    ["deriveKey"]
+    ["deriveKey"],
   );
 
   return window.crypto.subtle.deriveKey(
@@ -206,7 +212,7 @@ export async function deriveWrappingKey(password, salt) {
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     true,
-    ["encrypt", "decrypt"]
+    ["encrypt", "decrypt"],
   );
 }
 
@@ -229,11 +235,13 @@ export async function wrapPrivateKey(privateKeyJwk, password) {
   const encryptedData = await window.crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
     wrappingKey,
-    privateKeyData
+    privateKeyData,
   );
 
   // Combine iv + encryptedData into a single buffer for storage
-  const combined = new Uint8Array(iv.length + new Uint8Array(encryptedData).length);
+  const combined = new Uint8Array(
+    iv.length + new Uint8Array(encryptedData).length,
+  );
   combined.set(iv);
   combined.set(new Uint8Array(encryptedData), iv.length);
 
@@ -251,19 +259,25 @@ export async function wrapPrivateKey(privateKeyJwk, password) {
  * @param {string} password - The user's login password
  * @returns {Promise<Object|null>} - The RSA private key JWK, or null on failure
  */
-export async function unwrapPrivateKey(encryptedPrivateKeyBase64, keySaltBase64, password) {
+export async function unwrapPrivateKey(
+  encryptedPrivateKeyBase64,
+  keySaltBase64,
+  password,
+) {
   try {
     const salt = new Uint8Array(base64ToArrayBuffer(keySaltBase64));
     const wrappingKey = await deriveWrappingKey(password, salt);
 
-    const combined = new Uint8Array(base64ToArrayBuffer(encryptedPrivateKeyBase64));
+    const combined = new Uint8Array(
+      base64ToArrayBuffer(encryptedPrivateKeyBase64),
+    );
     const iv = combined.slice(0, 12);
     const encryptedData = combined.slice(12);
 
     const decryptedData = await window.crypto.subtle.decrypt(
       { name: "AES-GCM", iv },
       wrappingKey,
-      encryptedData
+      encryptedData,
     );
 
     const dec = new TextDecoder();
