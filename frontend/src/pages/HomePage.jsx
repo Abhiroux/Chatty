@@ -1,11 +1,17 @@
 import { useChatStore } from "../store/useChatStore";
+import { useGroupStore } from "../store/useGroupStore";
 import Sidebar from "../components/Sidebar";
 import NoChatSelected from "../components/NoChatSelected";
 import ChatContainer from "../components/ChatContainer";
+import GroupChatContainer from "../components/GroupChatContainer";
 
 const HomePage = () => {
   // Get the currently selected user from the chat store
   const { selectedUser } = useChatStore();
+  const { selectedGroup } = useGroupStore();
+
+  // Determine which chat to show
+  const showChat = selectedUser || selectedGroup;
 
   return (
     // Full screen container with background color matching DESIGN.md
@@ -15,19 +21,25 @@ const HomePage = () => {
           {/* Sidebar — on mobile, hidden when a chat is open */}
           <div
             className={`w-full md:w-80 lg:w-96 shrink-0 h-full transition-transform duration-300 ease-in-out
-              ${selectedUser ? "-translate-x-full md:translate-x-0 absolute md:relative" : "translate-x-0 relative"}
+              ${showChat ? "-translate-x-full md:translate-x-0 absolute md:relative" : "translate-x-0 relative"}
             `}
           >
             <Sidebar />
           </div>
 
-          {/* Chat area — on mobile, slides in from the right when a user is selected */}
+          {/* Chat area — on mobile, slides in from the right when a user/group is selected */}
           <div
             className={`absolute md:relative inset-0 md:inset-auto w-full md:w-auto md:flex-1 h-full transition-transform duration-300 ease-in-out
-              ${selectedUser ? "translate-x-0" : "translate-x-full md:translate-x-0"}
+              ${showChat ? "translate-x-0" : "translate-x-full md:translate-x-0"}
             `}
           >
-            {!selectedUser ? <NoChatSelected /> : <ChatContainer />}
+            {!showChat ? (
+              <NoChatSelected />
+            ) : selectedGroup ? (
+              <GroupChatContainer />
+            ) : (
+              <ChatContainer />
+            )}
           </div>
         </div>
       </div>

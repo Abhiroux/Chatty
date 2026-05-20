@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
+import { useGroupStore } from "../store/useGroupStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
-import { Search, UserPlus, Check, X, ArrowLeft, Users, MessageCircle } from "lucide-react";
+import { Search, UserPlus, Check, X, ArrowLeft, Users, MessageCircle, Plus } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useConnectionStore } from "../store/useConnectionStore";
+import CreateGroupModal from "./CreateGroupModal";
 
 const Sidebar = () => {
   const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading, unreadCounts } = useChatStore();
@@ -16,14 +18,18 @@ const Sidebar = () => {
     getSentRequests, sentRequests
   } = useConnectionStore();
 
+  const { groups, getMyGroups, setSelectedGroup, selectedGroup } = useGroupStore();
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [view, setView] = useState("contacts"); // "contacts", "search", "requests"
+  const [view, setView] = useState("contacts"); // "contacts", "search", "requests", "groups"
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
 
   useEffect(() => {
     getUsers();
     getFriendRequests();
     getSentRequests();
-  }, [getUsers, getFriendRequests, getSentRequests]);
+    getMyGroups();
+  }, [getUsers, getFriendRequests, getSentRequests, getMyGroups]);
 
   // Count only online users who are in the contacts list (friends)
   const onlineFriendsCount = users.filter((user) => onlineUsers.includes(user._id)).length;
@@ -51,6 +57,19 @@ const Sidebar = () => {
     searchUsers("");
   };
 
+  // Handle selecting a group
+  const handleSelectGroup = (group) => {
+    setSelectedGroup(group);
+    // Clear selected user when selecting a group
+    setSelectedUser(null);
+  };
+
+  // Handle selecting a user (clear selected group)
+  const handleSelectUser = (user) => {
+    setSelectedUser(user);
+    setSelectedGroup(null);
+  };
+
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
@@ -59,8 +78,8 @@ const Sidebar = () => {
       {/* Top Bar: User Profile & Actions */}
       <div className="flex items-center justify-between p-4 pb-2">
         <div className="flex items-center gap-3">
-          {/* Show back arrow when in requests or search view */}
-          {view !== "contacts" ? (
+          {/* Show back arrow when in requests, search, or groups view */}
+          {(view !== "contacts" && view !== "groups") ? (
             <button
               onClick={goBackToContacts}
               className="flex items-center justify-center size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
@@ -79,36 +98,93 @@ const Sidebar = () => {
           )}
           <div className="flex flex-col">
             <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              {view === "requests" ? "Requests" : view === "search" ? "Search" : "Chats"}
+              {view === "requests" ? "Requests" : view === "search" ? "Search" : view === "groups" ? "Groups" : "Chats"}
             </h2>
             {view === "contacts" && (
               <p className="text-xs text-slate-400 dark:text-slate-500 -mt-0.5">
                 {onlineFriendsCount} online
               </p>
             )}
+            {view === "groups" && (
+              <p className="text-xs text-slate-400 dark:text-slate-500 -mt-0.5">
+                {groups.length} group{groups.length !== 1 ? "s" : ""}
+              </p>
+            )}
           </div>
         </div>
 
-        <button
-          className={`relative flex items-center justify-center size-10 rounded-full transition-colors ${
-            view === "requests"
-              ? "bg-[#6764f2]/10 dark:bg-[#6764f2]/20 text-[#6764f2]"
-              : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400"
-          }`}
-          onClick={() => setView(view === "requests" ? "contacts" : "requests")}
-          title="Friend Requests"
-        >
-          <UserPlus className="size-5" />
-          {friendRequests.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-[#6764f2] text-white text-[10px] font-bold rounded-full size-[18px] flex items-center justify-center shadow-sm shadow-[#6764f2]/40 ring-2 ring-white dark:ring-[#16152a]">
-              {friendRequests.length}
-            </span>
+        <div className="flex items-center gap-1">
+          {/* Create Group button — only in groups view */}
+          {view === "groups" && (
+            <button
+              className="flex items-center justify-center size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+              onClick={() => setShowCreateGroup(true)}
+              title="Create Group"
+            >
+              <Plus className="size-5" />
+            </button>
           )}
-        </button>
+
+          <button
+            className={`relative flex items-center justify-center size-10 rounded-full transition-colors ${
+              view === "requests"
+                ? "bg-[#6764f2]/10 dark:bg-[#6764f2]/20 text-[#6764f2]"
+                : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400"
+            }`}
+            onClick={() => setView(view === "requests" ? "contacts" : "requests")}
+            title="Friend Requests"
+          >
+            <UserPlus className="size-5" />
+            {friendRequests.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[#6764f2] text-white text-[10px] font-bold rounded-full size-[18px] flex items-center justify-center shadow-sm shadow-[#6764f2]/40 ring-2 ring-white dark:ring-[#16152a]">
+                {friendRequests.length}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Search Bar — hidden in requests view */}
-      {view !== "requests" && (
+      {/* Tab Switcher: Chats | Groups — only show in contacts/groups view */}
+      {(view === "contacts" || view === "groups") && (
+        <div className="px-4 pb-1">
+          <div className="flex bg-slate-100 dark:bg-[#1e1d33] rounded-xl p-1">
+            <button
+              onClick={() => setView("contacts")}
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+                view === "contacts"
+                  ? "bg-white dark:bg-[#16152a] text-slate-900 dark:text-slate-100 shadow-sm"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+              }`}
+            >
+              <span className="flex items-center justify-center gap-1.5">
+                <MessageCircle className="size-3.5" />
+                Chats
+              </span>
+            </button>
+            <button
+              onClick={() => setView("groups")}
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+                view === "groups"
+                  ? "bg-white dark:bg-[#16152a] text-slate-900 dark:text-slate-100 shadow-sm"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+              }`}
+            >
+              <span className="flex items-center justify-center gap-1.5">
+                <Users className="size-3.5" />
+                Groups
+                {groups.length > 0 && (
+                  <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded-full">
+                    {groups.length}
+                  </span>
+                )}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Search Bar — hidden in requests and groups view */}
+      {view !== "requests" && view !== "groups" && (
         <div className="px-4 py-3">
           <div className="relative group">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 group-focus-within:text-[#6764f2] transition-colors">
@@ -144,7 +220,7 @@ const Sidebar = () => {
         </div>
       )}
 
-      {/* Chat List / Search Results / Friend Requests */}
+      {/* Chat List / Search Results / Friend Requests / Groups */}
       <div className="flex-1 overflow-y-auto px-2 space-y-1 custom-scrollbar">
 
         {/* ═══ CONTACTS VIEW ═══ */}
@@ -160,14 +236,14 @@ const Sidebar = () => {
               </div>
             ) : (
               filteredUsers.map((user) => {
-                const isSelected = selectedUser?._id === user._id;
+                const isSelected = selectedUser?._id === user._id && !selectedGroup;
                 const isOnline = onlineUsers.includes(user._id);
                 const unreadCount = unreadCounts?.[user._id] || 0;
 
                 return (
                   <div
                     key={user._id}
-                    onClick={() => setSelectedUser(user)}
+                    onClick={() => handleSelectUser(user)}
                     className={`group flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-150 relative ${isSelected
                       ? "bg-[#6764f2]/10 dark:bg-white/5"
                       : "hover:bg-slate-100 dark:hover:bg-white/5"
@@ -196,6 +272,74 @@ const Sidebar = () => {
                           {unreadCount > 99 ? "99+" : unreadCount}
                         </div>
                       )}
+                    </div>
+
+                    {isSelected && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#6764f2] rounded-r-full"></div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </>
+        )}
+
+        {/* ═══ GROUPS VIEW ═══ */}
+        {view === "groups" && (
+          <>
+            {groups.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#1e1d33] flex items-center justify-center mb-3">
+                  <Users className="w-7 h-7 text-slate-300 dark:text-slate-600" />
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">No groups yet</p>
+                <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">Create a group to start chatting</p>
+                <button
+                  onClick={() => setShowCreateGroup(true)}
+                  className="mt-4 bg-[#6764f2] hover:bg-[#524fcc] text-white px-4 py-2 text-xs font-semibold rounded-lg shadow-sm shadow-[#6764f2]/30 transition-colors flex items-center gap-1.5"
+                >
+                  <Plus className="size-3.5" />
+                  Create Group
+                </button>
+              </div>
+            ) : (
+              groups.map((group) => {
+                const isSelected = selectedGroup?._id === group._id;
+                const memberCount = group.members?.length || 0;
+
+                return (
+                  <div
+                    key={group._id}
+                    onClick={() => handleSelectGroup(group)}
+                    className={`group flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-150 relative ${
+                      isSelected
+                        ? "bg-[#6764f2]/10 dark:bg-white/5"
+                        : "hover:bg-slate-100 dark:hover:bg-white/5"
+                    }`}
+                  >
+                    <div className="relative shrink-0">
+                      <div className="size-12 rounded-full bg-gradient-to-br from-[#6764f2] to-[#9b59b6] flex items-center justify-center shadow-sm">
+                        {group.groupPic ? (
+                          <img
+                            src={group.groupPic}
+                            alt={group.name}
+                            className="size-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <Users className="size-6 text-white" />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between flex-1 min-w-0">
+                      <div className="flex flex-col min-w-0">
+                        <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                          {group.name}
+                        </p>
+                        <p className="text-sm text-slate-400 dark:text-slate-500 truncate">
+                          {memberCount} member{memberCount !== 1 ? "s" : ""}
+                        </p>
+                      </div>
                     </div>
 
                     {isSelected && (
@@ -316,6 +460,12 @@ const Sidebar = () => {
           </div>
         )}
       </div>
+
+      {/* Create Group Modal */}
+      <CreateGroupModal
+        isOpen={showCreateGroup}
+        onClose={() => setShowCreateGroup(false)}
+      />
     </aside>
   );
 };
