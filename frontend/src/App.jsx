@@ -15,6 +15,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { useThemeStore } from "./store/useThemeStore";
 import { useConnectionStore } from "./store/useConnectionStore";
 import { useChatStore } from "./store/useChatStore";
+import { useGroupStore } from "./store/useGroupStore";
 
 const App = () => {
   // Get authentication state and functions from auth store
@@ -75,17 +76,20 @@ const App = () => {
 
   const { subscribeToFriendEvents, unsubscribeFromFriendEvents } = useConnectionStore();
   const { subscribeToMessages, unsubscribeFromMessages } = useChatStore();
+  const { subscribeToGroupMessages, unsubscribeFromGroupMessages } = useGroupStore();
 
   useEffect(() => {
     if (authUser) {
       subscribeToFriendEvents();
       subscribeToMessages();
+      subscribeToGroupMessages();
     }
     return () => {
       unsubscribeFromFriendEvents();
       unsubscribeFromMessages();
+      unsubscribeFromGroupMessages();
     };
-  }, [authUser, subscribeToFriendEvents, unsubscribeFromFriendEvents, subscribeToMessages, unsubscribeFromMessages]);
+  }, [authUser, subscribeToFriendEvents, unsubscribeFromFriendEvents, subscribeToMessages, unsubscribeFromMessages, subscribeToGroupMessages, unsubscribeFromGroupMessages]);
 
   useEffect(() => {
     return initThemeListener();
